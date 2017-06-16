@@ -10,7 +10,8 @@ main(List<String> args) async {
   await FirstLaunchTask.doTask();
   lastFmTimer = new Timer.periodic(new Duration(days: 1), (_) => LastFMTask.doTask());
 
-  await WhileTrueAsync.run(MusicBrainzCheckTask.doTask);
+  WhileTrueMBCheckTask.continuousMBCheckTask();
+  //await WhileTrueAsync.run(MusicBrainzCheckTask.doTask);
 }
 
 

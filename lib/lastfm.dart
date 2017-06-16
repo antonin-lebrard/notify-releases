@@ -58,7 +58,7 @@ class LastFMFetching {
       List artistsContent = content["artist"];
       print(attr);
       for (Map artist in artistsContent) {
-        if (artist["mbid"] != null && artist["mbid"] != "") {
+        if (artist["mbid"] != null && artist["mbid"] != "" && !artist["name"].contains("feat.")) {
           artistsPage.add(new Artist(artist));
         }
       }

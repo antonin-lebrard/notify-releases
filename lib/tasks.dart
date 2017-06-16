@@ -70,9 +70,23 @@ class MusicBrainzCheckTask {
   static Future doTask() async {
     List<Map<String, String>> json = (JSON.decode(await FileHandling.readFile(FileHandling.mbLastRelease)) as List<Map<String, String>>);
     List<LastRelease> list = new List.generate(json.length, (int idx) => new LastRelease(json[idx]));
-    String mbid = list.reduce((LastRelease one, LastRelease other) => (one.timestampLastChecked > other.timestampLastChecked) ? other : one)
-        .mbid;
-    await MusicBrainzFetching.fetchArtistInfo(mbid);
+    LastRelease lastRelease = list.reduce((LastRelease one, LastRelease other) => (one.timestampLastChecked > other.timestampLastChecked) ? other : one);
+    return MusicBrainzFetching.fetchArtistInfo(lastRelease.mbid, lastRelease.lastRelease);
+  }
+
+}
+
+class WhileTrueMBCheckTask {
+
+  static StreamController _whileController = new StreamController();
+  static Stream _whileStream = _whileController.stream;
+
+  static Future continuousMBCheckTask() async {
+    _whileStream.listen((_) async {
+      await MusicBrainzCheckTask.doTask();
+      _whileController.add(null);
+    });
+    _whileController.add(null);
   }
 
 }

@@ -3,51 +3,56 @@ part of lib;
 
 
 
-
 class MusicBrainzFetching {
 
-  static Future fetchArtistInfo(String mbid) async {
+  static Future fetchArtistInfo(String mbid, DateTime lastChecked) async {
     List<ReleaseGroup> saving = new List<ReleaseGroup>();
     print("doing req for mbid : $mbid");
     if (mbid != null || mbid != "") {
-      saving = await MBRemote.doRequest(mbid).then((String body) async {
-        Map json = JSON.decode(body);
-        if (json.containsKey("error")) {
-          return [];
-        }
-        String artist = json["name"];
-        List<Map> jsonRel = (json["release-groups"] as List<Map>);
-        if (jsonRel == null) {
-          print(json);
-          return [];
-        }
-        jsonRel.retainWhere((Map m) {
-          if (m["primary-type"] == null) return false;
-          if (m["title"] == null) return false;
-          if (m["first-release-date"] == null) return false;
-          if ((m["first-release-date"] as String)
-              .split("-")
-              .length != 3) return false;
-          return true;
-        });
-        List<ReleaseGroup> releases = new List<ReleaseGroup>.generate(jsonRel.length, (int idx) {
-          return new ReleaseGroup(jsonRel[idx], artist);
-        });
-        DateTime lastChecked = await _getLastReleaseCheckedForArtist(mbid);
-
-        /// get only the new ones compared to last checked DateTime
-        releases.retainWhere((ReleaseGroup r) {
-          return r.first_release_date.compareTo(lastChecked) > 0;
-        });
-        return releases;
-      });
+      saving = await getReleasesForMBid(mbid, lastChecked);
     }
-    await Future.wait([_saveNewLastReleaseDate(mbid, saving), _saveIntoBatchReleases(saving)]);
+    return Future.wait([_saveNewLastReleaseDate(mbid, saving), _saveIntoBatchReleases(saving)]);
   }
 
-  static Future<DateTime> _getLastReleaseCheckedForArtist(String mbid) async {
-    List<Map<String, String>> json = JSON.decode(await FileHandling.readFile(FileHandling.mbLastRelease));
-    return DateFromString(json.firstWhere((Map<String, String> m) => m["mbid"] == mbid)["lastRelease"]);
+  static Future<List<ReleaseGroup>> getReleasesForMBid(String mbid, DateTime lastChecked, [int recursiveIndex = 1]) async {
+    return MBRemote.doRequest(mbid).then((String body) async {
+      Map json = JSON.decode(body);
+      if (json.containsKey("error")) {
+        print(json);
+        if (recursiveIndex == 30){
+          print("too many tries for one mbid, will skip it now");
+          return [];
+        }
+        int duration = 3 * (recursiveIndex / 2).ceil();
+        print("will wait for $duration minutes, to see if the error will dissipate");
+        await waitForDuration(new Duration(minutes: duration));
+        return getReleasesForMBid(mbid, lastChecked, recursiveIndex++);
+      }
+      String artist = json["name"];
+      List<Map> jsonRel = (json["release-groups"] as List<Map>);
+      if (jsonRel == null) {
+        print(json);
+        return [];
+      }
+      jsonRel.retainWhere((Map m) {
+        if (m["primary-type"] == null) return false;
+        if (m["title"] == null) return false;
+        if (m["first-release-date"] == null) return false;
+        if ((m["first-release-date"] as String)
+            .split("-")
+            .length != 3) return false;
+        return true;
+      });
+      List<ReleaseGroup> releases = new List<ReleaseGroup>.generate(jsonRel.length, (int idx) {
+        return new ReleaseGroup(jsonRel[idx], artist);
+      });
+
+      /// get only the new ones compared to last checked DateTime
+      releases.retainWhere((ReleaseGroup r) {
+        return r.first_release_date.compareTo(lastChecked) > 0;
+      });
+      return releases;
+    });
   }
 
   static Future _saveNewLastReleaseDate(String mbid, List<ReleaseGroup> newReleases) async {
@@ -69,15 +74,15 @@ class MusicBrainzFetching {
         break;
       }
     }
-    await FileHandling.writeToFile(FileHandling.mbLastRelease, JSON.encode(json));
+    return FileHandling.writeToFile(FileHandling.mbLastRelease, JSON.encode(json));
   }
 
   static Future _saveIntoBatchReleases(List<ReleaseGroup> toSave) async {
     if (toSave.length == 0)
-      return;
+      return new Future.value(null);
     List<Map> jsonRel = JSON.decode(await FileHandling.readFile(FileHandling.batchReleaseToNotify));
     jsonRel.addAll(new List.generate(toSave.length, (int idx) => ReleaseGroup.toJSON(toSave[idx])));
-    await FileHandling.writeToFile(FileHandling.batchReleaseToNotify, JSON.encode(jsonRel));
+    return FileHandling.writeToFile(FileHandling.batchReleaseToNotify, JSON.encode(jsonRel));
   }
 
 }

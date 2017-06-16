@@ -12,6 +12,7 @@ class MBRemote {
   static DateTime lastXRatelimitReset = new DateTime.now();
 
   static Future<String> doRequest(String mbid) async {
+    await waitForDuration(new Duration(minutes: 1));
     DateTime now = new DateTime.now();
     if (lastXRatelimitReset.isAfter(now))
       await waitForDuration(now.difference(lastXRatelimitReset));
@@ -31,5 +32,6 @@ class MBRemote {
       return resp.body;
     });
   }
+
 
 }
