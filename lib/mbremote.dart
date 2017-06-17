@@ -20,15 +20,17 @@ class MBRemote {
     return http.get(url).then((http.Response resp){
       String xRatelimit = resp.headers["x-ratelimit-reset"];
       if (xRatelimit == null){
+        print("x-ratelimit-reset value not found in header, maybe something wrong");
+        print("headers :");
         print(resp.headers);
+        print("body :");
         print(resp.body);
       }
-      else
-        print(xRatelimit);
       if (xRatelimit == null || xRatelimit == "")
         xRatelimit = (now.add(new Duration(seconds: 30)).millisecondsSinceEpoch / 1000).floor().toString();
       int convertRatelimit = int.parse(xRatelimit) * 1000 + 2;
       lastXRatelimitReset = new DateTime.fromMillisecondsSinceEpoch(convertRatelimit);
+      print("ratelimit will reset in ${now.difference(lastXRatelimitReset)}");
       return resp.body;
     });
   }

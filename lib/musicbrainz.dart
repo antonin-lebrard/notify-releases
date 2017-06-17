@@ -7,7 +7,7 @@ class MusicBrainzFetching {
 
   static Future fetchArtistInfo(String mbid, DateTime lastChecked) async {
     List<ReleaseGroup> saving = new List<ReleaseGroup>();
-    print("doing req for mbid : $mbid");
+    print("its mbid : $mbid");
     if (mbid != null || mbid != "") {
       saving = await getReleasesForMBid(mbid, lastChecked);
     }

@@ -71,6 +71,7 @@ class MusicBrainzCheckTask {
     List<Map<String, String>> json = (JSON.decode(await FileHandling.readFile(FileHandling.mbLastRelease)) as List<Map<String, String>>);
     List<LastRelease> list = new List.generate(json.length, (int idx) => new LastRelease(json[idx]));
     LastRelease lastRelease = list.reduce((LastRelease one, LastRelease other) => (one.timestampLastChecked > other.timestampLastChecked) ? other : one);
+    print("doing req for name : ${lastRelease.name}");
     return MusicBrainzFetching.fetchArtistInfo(lastRelease.mbid, lastRelease.lastRelease);
   }
 
