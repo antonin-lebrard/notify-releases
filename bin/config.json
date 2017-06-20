@@ -1,0 +1,10 @@
+{
+  "lastFMUsername": "",
+  "daysToSubtract": 30,
+  "mailSmtpHostname": "",
+  "mailSmtpPort": 465,
+  "mailSmtpSecured": true,
+  "mailSmtpUsername": "",
+  "mailSmtpPassword": "",
+  "mailAddressToContactForNewReleases": ""
+}
