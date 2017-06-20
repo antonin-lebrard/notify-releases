@@ -7,14 +7,14 @@ The list is updated each day.
 
 Then the program will launch regular request to the MusicBrainz API to check any new release of each artist, one artist per request.
 
-And every 30 minutes it will send a mail with the new releases (if found) it has found since then.
+And every 30 minutes it will send a mail with the new releases it has found since then.
 
 ## What is needed to launch it :
 
 - The [DartSDK](https://www.dartlang.org/install)
 - A [LastFM](https://www.last.fm) account
 - A mail account to use to deliver the new releases
-- The email address of your mail account you which to receive at the new releases mails
+- The email address of your mail account on which you want to receive the new releases mails
 
 ## How to use it : 
 
