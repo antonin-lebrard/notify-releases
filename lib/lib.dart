@@ -5,6 +5,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
+import 'package:mailer/mailer.dart';
 
 
 part 'config.dart';
@@ -18,6 +19,7 @@ part 'mbremote.dart';
 
 
 Timer lastFmTimer;
+Timer mailTimer;
 
 
 DateTime DateFromString(String s){

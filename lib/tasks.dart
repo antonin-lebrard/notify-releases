@@ -6,6 +6,7 @@ part of lib;
 class FirstLaunchTask {
 
   static Future doTask() async {
+    await Config.loadConfigFromFile("config.json");
     if (!FileHandling.lastFMList.fileToBlock.existsSync()){
       FileHandling.lastFMList.fileToBlock.createSync();
       await LastFMTask.doTask();
@@ -93,6 +94,38 @@ class WhileTrueMBCheckTask {
 }
 
 
+class MailBatchTask {
+
+  static Future doTask() async {
+    SmtpOptions opt = new SmtpOptions()
+        ..hostName = Config.mailSmtpHostname
+        ..port = Config.mailSmtpPort
+        ..secured = Config.mailSmtpSecured
+        ..username = Config.mailSmtpUsername
+        ..password = Config.mailSmtpPassword
+        ..requiresAuthentication = true;
+
+    SmtpTransport emailTransport = new SmtpTransport(opt);
+
+    Envelope mail = new Envelope()
+        ..from = Config.mailSmtpUsername
+        ..recipients.add(Config.mailAddressToContactForNewReleases)
+        ..subject = "See new Releases from the artists you follows"
+        ..text = "";
+
+    List<Map<String, String>> batchJson = JSON.decode(await FileHandling.readFile(FileHandling.batchReleaseToNotify));
+    List<ReleaseGroup> newReleases = new List.generate(batchJson.length, (int idx) => new ReleaseGroup.mapWithArtist(batchJson[idx]), growable: false);
+    newReleases.forEach((ReleaseGroup release){
+      mail.text += "\n${release.artist} has released a new ${release.primary_type}, named ${release.title} since ${release.first_release_date}\n";
+    });
+
+    return emailTransport.send(mail).then((_) async {
+      print("batch email successfully sent!");
+      return FileHandling.writeToFile(FileHandling.batchReleaseToNotify, "[]");
+    });
+  }
+
+}
 
 
 

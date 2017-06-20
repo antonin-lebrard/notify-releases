@@ -19,5 +19,57 @@ class Config {
    */
   static int daysToSubtract = 30;
 
+  /// -----------------------------
+  /// These are the parameters for the smtp server used to deliver new releases by mail
+  /// -----------------------------
+
+  /**
+   * The smtp server hostname like "smtp.gmail.com" for example
+   */
+  static String mailSmtpHostname = "";
+
+  /**
+   * The smtp port, usually 465 for a secured one
+   */
+  static int mailSmtpPort = 465;
+
+  /**
+   * Is the smtp server secured by TLS or SSL
+   * Warning : If not your password will be send in clear through internet,
+   * you should change your mail service if it is the case.
+   */
+  static bool mailSmtpSecured = true;
+
+  /**
+   * The username to use to connect to your mail account
+   */
+  static String mailSmtpUsername = "";
+
+  /**
+   * The password to use to connect to your mail account
+   */
+  static String mailSmtpPassword = "";
+
+  /**
+   * The mail address to send the messages to, when new releases batch need to be sent
+   */
+  static String mailAddressToContactForNewReleases = "";
+
+
+  static Future loadConfigFromFile(String filename) async {
+    File configFile = new File(filename);
+    if (!(await configFile.exists())){
+      configFile = new File("bin/$filename");
+    }
+    Map json = JSON.decode(await configFile.readAsString());
+    lastFMUsername = json["lastFMUsername"] ?? "";
+    daysToSubtract = json["daysToSubtract"] ?? 30;
+    mailSmtpHostname = json["mailSmtpHostname"] ?? "";
+    mailSmtpPort = json["mailSmtpPort"] ?? 465;
+    mailSmtpSecured = json["mailSmtpSecured"] ?? true;
+    mailSmtpUsername = json["mailSmtpUsername"] ?? "";
+    mailSmtpPassword = json["mailSmtpPassword"] ?? "";
+    mailAddressToContactForNewReleases = json["mailAddressToContactForNewReleases"] ?? "";
+  }
 
 }
