@@ -56,6 +56,12 @@ class ReleaseGroup {
     title = json["title"];
     first_release_date = DateFromString(json["first-release-date"]);
     primary_type = json["primary-type"];
+    if (json["secondary-types"] != null){
+      List<String> secondaryTypes = json["secondary-types"];
+      if (secondaryTypes.length == 0)
+        return;
+      primary_type = secondaryTypes[0];
+    }
   }
 
   ReleaseGroup.mapWithArtist(Map json){
@@ -63,6 +69,12 @@ class ReleaseGroup {
     first_release_date = DateFromString(json["first-release-date"]);
     primary_type = json["primary-type"];
     artist = json["artist"];
+    if (json["secondary-types"] != null){
+      List<String> secondaryTypes = json["secondary-types"];
+      if (secondaryTypes.length == 0)
+        return;
+      primary_type = secondaryTypes[0];
+    }
   }
 
   static Map<String, String> toJSON(ReleaseGroup r){

@@ -72,7 +72,7 @@ class MusicBrainzCheckTask {
     List<Map<String, String>> json = (JSON.decode(await FileHandling.readFile(FileHandling.mbLastRelease)) as List<Map<String, String>>);
     List<LastRelease> list = new List.generate(json.length, (int idx) => new LastRelease(json[idx]));
     LastRelease lastRelease = list.reduce((LastRelease one, LastRelease other) => (one.timestampLastChecked > other.timestampLastChecked) ? other : one);
-    print("doing req for name : ${lastRelease.name}");
+    print("preparing request for name : ${lastRelease.name}");
     return MusicBrainzFetching.fetchArtistInfo(lastRelease.mbid, lastRelease.lastRelease);
   }
 
@@ -93,7 +93,9 @@ class WhileTrueMBCheckTask {
 
 }
 
-
+/**
+ * Send a mail containing all the new releases saved in batch.json
+ */
 class MailBatchTask {
 
   static Future doTask() async {
@@ -115,6 +117,9 @@ class MailBatchTask {
 
     List<Map<String, String>> batchJson = JSON.decode(await FileHandling.readFile(FileHandling.batchReleaseToNotify));
     List<ReleaseGroup> newReleases = new List.generate(batchJson.length, (int idx) => new ReleaseGroup.mapWithArtist(batchJson[idx]), growable: false);
+    if (newReleases.length == 0){
+      return new Future.value(null);
+    }
     newReleases.forEach((ReleaseGroup release){
       mail.text += "\n${release.artist} has released a new ${release.primary_type}, named ${release.title} since ${release.first_release_date}\n";
     });
