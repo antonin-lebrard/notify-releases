@@ -10,7 +10,7 @@ main(List<String> args) async {
 
   ServeWebBatch.doTask();
   lastFmTimer = new Timer.periodic(new Duration(days: 1), (_) => LastFMTask.doTask());
-  mailTimer = new Timer.periodic(new Duration(minutes: 30), (_) => MailBatchTask.doTask());
+  mailTimer = new Timer.periodic(new Duration(minutes: Config.minutesUntilNextMail), (_) => MailBatchTask.doTask());
 
   WhileTrueMBCheckTask.continuousMBCheckTask();
 }

@@ -2,51 +2,34 @@ part of lib;
 
 
 
-class LastFMFetching {
+class LastFMRemote {
 
-  static String API_KEY = "";
-
-  StreamController<int> _loading = new StreamController.broadcast();
-  Stream<int> loading;
-  StreamController<LastFMError> _onError = new StreamController.broadcast();
-  Stream<LastFMError> onError;
-
-  Map attr = {
-    "totalPages": "2",
-    "isFake": true
-  };
-
-  LastFMFetching(){
-    loading = _loading.stream;
-    onError = _onError.stream;
-  }
-
-  Future<List<Artist>> getArtists(List<Artist> artists, [int page=1]){
-    if (page > int.parse(attr['totalPages'])){
-      return new Future.value(artists);
-    }
-    Completer completer = new Completer();
-    if (attr['isFake'] == null || !attr['isFake']){
-      int loadingPercentage = ((page / int.parse(attr['totalPages'])) * 100).toInt();
-      _loading.add(loadingPercentage);
-    }
-    getArtistPage(page).then((List<Artist> artistsPage){
-      artists.addAll(artistsPage);
-      _loading.add(100);
-      completer.complete(getArtists(artists, ++page));
-    }).catchError((LastFMError error){
-      _onError.add(error);
+  static Future<List<Artist>> getArtists() async {
+    Completer<List<Artist>> completer = new Completer<List<Artist>>();
+    List<Artist> artists = new List<Artist>();
+    int page = 1;
+    StreamController controller = new StreamController();
+    Stream stream = controller.stream;
+    StreamSubscription sub;
+    sub = stream.listen((_) async {
+      int totalPage = await getArtistPage(artists, page);
+      page++;
+      if (page <= totalPage){
+        controller.add(null);
+      } else {
+        controller.close();
+      }
+    }, onDone: (){
+      sub.cancel();
+      completer.complete(artists);
     });
-    return completer.future as Future<List<Artist>>;
+    controller.add(null);
+    return completer.future;
   }
 
-  Future<List<Artist>> getArtistPage([int page = 0]){
-    Completer<List<Artist>> completer = new Completer();
-    List<Artist> artistsPage = new List();
-    String url = "http://ws.audioscrobbler.com/2.0/?method=library.getartists&api_key=$API_KEY&user=${Config.lastFMUsername}&format=json";
-    if (page > 0){
-      url += "&page=$page";
-    }
+  static Future<int> getArtistPage(List<Artist> artists, int page){
+    Completer<int> completer = new Completer();
+    String url = "http://ws.audioscrobbler.com/2.0/?method=library.getartists&api_key=${Config.lastFMApiKey}&user=${Config.lastFMUsername}&page=$page&format=json";
     http.get(url).then((http.Response resp) {
       Map content = JSON.decode(resp.body);
       if (content.containsKey("error")){
@@ -54,15 +37,18 @@ class LastFMFetching {
         return completer.completeError(new LastFMError(content["error"], content["message"]));
       }
       content = content["artists"];
-      attr = content["@attr"];
+      int totalPages = int.parse(content["@attr"]["totalPages"]);
       List artistsContent = content["artist"];
-      print(attr);
+      print(content["@attr"]);
       for (Map artist in artistsContent) {
-        if (artist["mbid"] != null && artist["mbid"] != "" && !artist["name"].toLowerCase().contains("feat.")) {
-          artistsPage.add(new Artist(artist));
+        if (artist["mbid"] != null &&
+                artist["mbid"] != "" &&
+                !artist["name"].toLowerCase().contains("feat.") &&
+                int.parse(artist["playcount"]) > Config.minPlayCountToNotify) {
+          artists.add(new Artist(artist));
         }
       }
-      completer.complete(artistsPage);
+      completer.complete(totalPages);
     });
     return completer.future;
   }

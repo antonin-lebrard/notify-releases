@@ -7,6 +7,11 @@ part of lib;
 class Config {
 
   /**
+   * LastFM API Key : used for all calls to the lastFM API
+   */
+  static String lastFMApiKey = "";
+
+  /**
    * LastFM username : used to get the list of artist to follow
    * The list will be fetched once a day to check new artist
    */
@@ -18,6 +23,16 @@ class Config {
    * But it needs a Date from which it can say any album from any artist is new.
    */
   static int daysToSubtract = 30;
+
+  /**
+   * Interval of minutes at which the program should send the email to notify [mailAddressToContactForNewReleases]
+   */
+  static int minutesUntilNextMail = 60;
+
+  /**
+   * How many scrobbles an artist should have to be notified of its new releases
+   */
+  static int minPlayCountToNotify = 20;
 
   /// -----------------------------
   /// These are the parameters for the smtp server used to deliver new releases by mail
@@ -35,8 +50,8 @@ class Config {
 
   /**
    * Is the smtp server secured by TLS or SSL
-   * Warning : If not your password will be send in clear through internet,
-   * you should change your mail service if it is the case.
+   * Warning : If not your password will be sent unencrypted through internet,
+   * you should change your mail service if it's the case.
    */
   static bool mailSmtpSecured = true;
 
@@ -51,7 +66,7 @@ class Config {
   static String mailSmtpPassword = "";
 
   /**
-   * The mail address to send the messages to, when new releases batch need to be sent
+   * The mail address to send the messages to, when new releases need to be sent
    */
   static String mailAddressToContactForNewReleases = "";
 
@@ -62,8 +77,11 @@ class Config {
       configFile = new File("bin/$filename");
     }
     Map json = JSON.decode(await configFile.readAsString());
+    lastFMApiKey = json["lastFMApiKey"] ?? "";
     lastFMUsername = json["lastFMUsername"] ?? "";
     daysToSubtract = json["daysToSubtract"] ?? 30;
+    minutesUntilNextMail = json["minutesUntilNextMail"] ?? 60;
+    minPlayCountToNotify = json["minPlayCountToNotify"] ?? 20;
     mailSmtpHostname = json["mailSmtpHostname"] ?? "";
     mailSmtpPort = json["mailSmtpPort"] ?? 465;
     mailSmtpSecured = json["mailSmtpSecured"] ?? true;

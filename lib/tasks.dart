@@ -58,9 +58,7 @@ class GenerateLastReleaseTask {
 class LastFMTask {
 
   static Future doTask() async {
-    LastFMFetching remote = new LastFMFetching();
-    List<Artist> artists = new List<Artist>();
-    return remote.getArtists(artists).then((List<Artist> artists){
+    return LastFMRemote.getArtists().then((List<Artist> artists){
       return FileHandling.writeToFile(FileHandling.lastFMList, JSON.encode(artists, toEncodable: Artist.toJSON));
     });
   }
