@@ -35,6 +35,8 @@ class FileHandling {
 
   static FileToBlock batchReleaseToNotify = new FileToBlock("batch.json");
 
+  static FileToBlock webBatchRelease = new FileToBlock("webBatch.json");
+
   static Future writeToFile(FileToBlock file, String content){
     Completer completer = new Completer();
     if (!file.isBlocked){

@@ -19,6 +19,10 @@ class FirstLaunchTask {
       FileHandling.batchReleaseToNotify.fileToBlock.createSync();
       FileHandling.batchReleaseToNotify.fileToBlock.writeAsStringSync("[]");
     }
+    if (!FileHandling.webBatchRelease.fileToBlock.existsSync()){
+      FileHandling.webBatchRelease.fileToBlock.createSync();
+      FileHandling.webBatchRelease.fileToBlock.writeAsStringSync("[]");
+    }
   }
 
 }
@@ -116,7 +120,7 @@ class MailBatchTask {
         ..text = "";
 
     List<Map<String, String>> batchJson = JSON.decode(await FileHandling.readFile(FileHandling.batchReleaseToNotify));
-    List<ReleaseGroup> newReleases = new List.generate(batchJson.length, (int idx) => new ReleaseGroup.mapWithArtist(batchJson[idx]), growable: false);
+    List<ReleaseGroup> newReleases = new List.generate(batchJson.length, (int idx) => new ReleaseGroup.mapWithArtistAndMbid(batchJson[idx]), growable: false);
     if (newReleases.length == 0){
       return new Future.value(null);
     }
@@ -133,6 +137,60 @@ class MailBatchTask {
 }
 
 
+
+class ServeWebBatch {
+
+  static Future doTask() async {
+    HttpServer server = await HttpServer.bind("localhost", 9100);
+    print("Server listening on localhost:9100");
+    server.listen((HttpRequest request) async {
+      _addCorsHeaders(request);
+      if (request.method == "OPTIONS"){
+        request.response.close();
+        return;
+      }
+      String methodHeader = request.headers["method"].first;
+      print("responding to request: $methodHeader");
+      if (methodHeader == "getWebBatch") {
+        request.response.write(await _getWebBatch());
+        request.response.close();
+      }
+      else if (methodHeader == "deleteReleases"){
+        _decodeRequestBody(request).then(_deleteReleases);
+      }
+      else {
+        request.response.statusCode = 400;
+        request.response.reasonPhrase = "This method does not exist";
+      }
+      request.response.close();
+    });
+  }
+
+  static void _addCorsHeaders(HttpRequest request){
+    request.response.headers.set("Allow", "OPTIONS,GET,POST");
+    request.response.headers.set("Access-Control-Allow-Origin", "*");
+    request.response.headers.set("Access-Control-Allow-Headers", "method");
+  }
+
+  static Future<String> _decodeRequestBody(HttpRequest request) async {
+    return UTF8.decoder.bind(request).single;
+  }
+
+  static Future<String> _getWebBatch(){
+    return FileHandling.readFile(FileHandling.webBatchRelease);
+  }
+
+  static Future _deleteReleases(String requestBody) async {
+    List<Map> relJsonToDel = JSON.decode(requestBody);
+    List<Map> allBatchJson = JSON.decode(await FileHandling.readFile(FileHandling.webBatchRelease));
+    List<ReleaseGroup> relToDel = new List.generate(relJsonToDel.length, (int idx) => new ReleaseGroup.mapWithArtistAndMbid(relJsonToDel[idx]));
+    List<ReleaseGroup> allBatch = new List.generate(allBatchJson.length, (int idx) => new ReleaseGroup.mapWithArtistAndMbid(allBatchJson[idx]));
+    allBatch.removeWhere((ReleaseGroup rel) => relToDel.contains(rel));
+    allBatchJson = new List.generate(allBatch.length, (int idx) => ReleaseGroup.toJSON(allBatch[idx]));
+    return FileHandling.writeToFile(FileHandling.webBatchRelease, JSON.encode(allBatchJson));
+  }
+
+}
 
 
 

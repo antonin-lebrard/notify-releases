@@ -11,7 +11,11 @@ class MusicBrainzFetching {
     if (mbid != null || mbid != "") {
       saving = await getReleasesForMBid(mbid, lastChecked);
     }
-    return Future.wait([_saveNewLastReleaseDate(mbid, saving), _saveIntoBatchReleases(saving)]);
+    return Future.wait([
+          _saveNewLastReleaseDate(mbid, saving),
+          _saveIntoBatchReleases(saving),
+          _saveIntoWebBatchReleases(mbid, saving)
+    ]);
   }
 
   static Future<List<ReleaseGroup>> getReleasesForMBid(String mbid, DateTime lastChecked, [int recursiveIndex = 1]) async {
@@ -19,7 +23,7 @@ class MusicBrainzFetching {
       Map json = JSON.decode(body);
       if (json.containsKey("error")) {
         print(json);
-        if (recursiveIndex == 30){
+        if (recursiveIndex == 20){
           print("too many tries for one mbid, will skip it now");
           return [];
         }
@@ -44,7 +48,7 @@ class MusicBrainzFetching {
         return true;
       });
       List<ReleaseGroup> releases = new List<ReleaseGroup>.generate(jsonRel.length, (int idx) {
-        return new ReleaseGroup(jsonRel[idx], artist);
+        return new ReleaseGroup(jsonRel[idx], artist, mbid);
       });
 
       /// get only the new ones compared to last checked DateTime
@@ -83,6 +87,14 @@ class MusicBrainzFetching {
     List<Map> jsonRel = JSON.decode(await FileHandling.readFile(FileHandling.batchReleaseToNotify));
     jsonRel.addAll(new List.generate(toSave.length, (int idx) => ReleaseGroup.toJSON(toSave[idx])));
     return FileHandling.writeToFile(FileHandling.batchReleaseToNotify, JSON.encode(jsonRel));
+  }
+
+  static Future _saveIntoWebBatchReleases(String mbid, List<ReleaseGroup> toSave) async {
+    if (toSave.length == 0)
+      return new Future.value(null);
+    List<Map> jsonRel = JSON.decode(await FileHandling.readFile(FileHandling.webBatchRelease));
+    jsonRel.addAll(new List.generate(toSave.length, (int idx) => ReleaseGroup.toJSON(toSave[idx])));
+    return FileHandling.writeToFile(FileHandling.webBatchRelease, JSON.encode(jsonRel));
   }
 
 }

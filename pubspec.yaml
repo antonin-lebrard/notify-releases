@@ -1,5 +1,5 @@
 name: notify_releases
-description: A simple console application.
+description: bla
 version: 0.0.1
 #homepage: https://www.example.com
 #author: Antonin <email@example.com>
@@ -11,5 +11,9 @@ dependencies:
   http: "0.11.3+9"
   mailer: "1.1.4"
 
-#dev_dependencies:
-#  test: ^0.12.0
+dev_dependencies:
+  browser: ^0.10.0
+  dart_to_js_script_rewriter: ^1.0.1
+
+transformers:
+- dart_to_js_script_rewriter
