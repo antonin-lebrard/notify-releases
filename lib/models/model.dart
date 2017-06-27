@@ -1,6 +1,7 @@
-part of lib;
+library models;
 
 
+import 'package:notify_releases/utils/utils.dart';
 
 
 
@@ -12,14 +13,14 @@ class Artist {
   Artist(Map json){
     name = json["name"];
     mbid = json["mbid"];
-    playCount = int.parse(json["playCount"] ?? "0", onError: (_) => 0);
+    playCount = int.parse(json["playcount"] ?? "0", onError: (_) => 0);
   }
 
   static Map<String, String> toJSON(Artist a){
     Map<String, String> map = new Map<String, String>();
     map["mbid"] = a.mbid;
     map["name"] = a.name;
-    map["playCount"] = a.playCount.toString();
+    map["playcount"] = a.playCount.toString();
     return map;
   }
 
