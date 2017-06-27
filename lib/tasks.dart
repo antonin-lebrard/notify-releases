@@ -73,7 +73,11 @@ class MusicBrainzCheckTask {
   static Future doTask() async {
     List<Map<String, String>> json = (JSON.decode(await FileHandling.readFile(FileHandling.mbLastRelease)) as List<Map<String, String>>);
     List<LastRelease> list = new List.generate(json.length, (int idx) => new LastRelease(json[idx]));
-    LastRelease lastRelease = list.reduce((LastRelease one, LastRelease other) => (one.timestampLastChecked > other.timestampLastChecked) ? other : one);
+    LastRelease lastRelease = list.where((LastRelease rel) {
+      return rel.playCount > Config.minPlayCountToNotify;
+    }).reduce((LastRelease one, LastRelease other){
+      return (one.timestampLastChecked > other.timestampLastChecked) ? other : one;
+    });
     print("preparing request for name : ${lastRelease.name}");
     return MusicBrainzFetching.fetchArtistInfo(lastRelease.mbid, lastRelease.lastRelease);
   }

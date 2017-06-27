@@ -31,12 +31,14 @@ class LastRelease {
   String name;
   DateTime lastRelease;
   int timestampLastChecked;
+  int playCount;
 
   LastRelease(Map json){
     name = json["name"];
     mbid = json["mbid"];
     lastRelease = DateFromString(json["lastRelease"]);
     timestampLastChecked = int.parse(json["timestampLastChecked"]);
+    playCount = int.parse(json["playcount"]);
   }
 
   static Map<String, String> toJSON(LastRelease l){
@@ -45,6 +47,7 @@ class LastRelease {
     map["mbid"] = l.mbid;
     map["lastRelease"] = StringFromDate(l.lastRelease);
     map["timestampLastChecked"] = l.timestampLastChecked.toString();
+    map["playcount"] = l.playCount.toString();
     return map;
   }
 
