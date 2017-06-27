@@ -6,27 +6,23 @@ import 'package:notify_releases/utils/utils.dart';
 
 List<Album> releasesBatch;
 
-class HttpRequestHelper {
-
-  static Future<String> get(String url, {Map<String, String> headers, String body}){
-    Completer completer = new Completer<String>();
-    HttpRequest req = new HttpRequest()..open("GET", url);
-    headers?.forEach((String key, String value){
-      req.setRequestHeader(key, value);
-    });
-    StreamSubscription sub;
-    sub = req.onLoad.listen((event){
-      completer.complete(event.target.responseText);
-      sub.cancel();
-    });
-    req.send(body);
-    return completer.future;
-  }
-
+Future<String> get(String url, {Map<String, String> headers, String body}){
+  Completer completer = new Completer<String>();
+  HttpRequest req = new HttpRequest()..open("GET", url);
+  headers?.forEach((String key, String value){
+    req.setRequestHeader(key, value);
+  });
+  StreamSubscription sub;
+  sub = req.onLoad.listen((event){
+    completer.complete(event.target.responseText);
+    sub.cancel();
+  });
+  req.send(body);
+  return completer.future;
 }
 
 void main() {
-  HttpRequestHelper.get("http://localhost:9100", headers: {"method": "getWebBatch"}).then((String rep){
+  get("http://localhost:9100", headers: {"method": "getWebBatch"}).then((String rep){
     List<Map> batchJson = JSON.decode(rep);
     releasesBatch = new List.generate(batchJson.length, (int idx) => new Album(batchJson[idx]));
     display();
@@ -35,7 +31,7 @@ void main() {
 
 void display(){
   for (Album rel in releasesBatch){
-    document.body.appendHtml("<div>${rel.artist} has released a new ${rel.primary_type} named ${rel.title}");
+    querySelector("#listAlbums").append(rel.createDiv());
   }
 }
 
@@ -58,13 +54,47 @@ class Album {
 
   String chosenImageUrl;
 
+  DivElement imageDiv;
+
   Album(Map json) {
     title = json["title"];
     first_release_date = DateFromString(json["first-release-date"]);
     primary_type = json["primary-type"];
     artist = json["artist"];
     mbid = json["mbid"];
-    getImageUrl();
+    getImageUrl().then((_){
+      imageDiv.style.backgroundImage = 'url("$chosenImageUrl")';
+    });
+  }
+
+  DivElement createDiv(){
+    DivElement artistDiv = new DivElement();
+    artistDiv.classes.add("artist");
+    DivElement content = new DivElement();
+    content.classes..add("content");
+    artistDiv..append(content..append(_metadataDiv())..append(_imageDiv()));
+    return artistDiv;
+  }
+
+  DivElement _metadataDiv(){
+    DivElement metadataWrapperDiv = new DivElement();
+    metadataWrapperDiv.classes.add("metadataWrapper");
+    DivElement nameDiv = new DivElement();
+    nameDiv.classes.add("name");
+    DivElement playCountDiv = new DivElement();
+    playCountDiv.classes.add("playCount");
+    nameDiv.text = this.title;
+    playCountDiv.text = this.artist;
+    return metadataWrapperDiv..append(nameDiv)..append(playCountDiv);
+  }
+
+  DivElement _imageDiv(){
+    DivElement imageWrapperDiv = new DivElement();
+    imageWrapperDiv.classes.add("imageWrapper");
+    imageDiv = new DivElement();
+    imageDiv.classes.add("image");
+    //imageDiv.style.backgroundImage = 'url("$chosenImageUrl")';
+    return imageWrapperDiv..append(imageDiv);
   }
 
   Future getImageUrl() async {
@@ -79,7 +109,7 @@ class Album {
     String lastFmAlbumInfo = lastFMAlbumInfoUrl
         .replaceFirst(ARTIST, Uri.encodeFull(artist))
         .replaceFirst(ALBUM, Uri.encodeFull(title));
-    return HttpRequestHelper.get(lastFmAlbumInfo).then((String rep){
+    return get(lastFmAlbumInfo).then((String rep){
       Map json = JSON.decode(rep);
       if (json.containsKey("error"))
         return "";
