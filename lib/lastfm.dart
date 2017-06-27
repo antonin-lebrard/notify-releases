@@ -43,8 +43,7 @@ class LastFMRemote {
       for (Map artist in artistsContent) {
         if (artist["mbid"] != null &&
                 artist["mbid"] != "" &&
-                !artist["name"].toLowerCase().contains("feat.") &&
-                int.parse(artist["playcount"]) > Config.minPlayCountToNotify) {
+                !artist["name"].toLowerCase().contains("feat.")) {
           artists.add(new Artist(artist));
         }
       }
