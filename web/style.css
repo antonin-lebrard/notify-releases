@@ -99,7 +99,7 @@ html, body {
     line-height: 40px;
     height: 40px;
 }
-.playCount {
+.artistName {
     align-self: flex-end;
     margin-right: 10px;
     margin-left: 10px;

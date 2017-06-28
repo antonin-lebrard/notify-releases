@@ -156,9 +156,9 @@ class Album {
     DivElement nameDiv = new DivElement();
     nameDiv.classes.add("name");
     DivElement playCountDiv = new DivElement();
-    playCountDiv.classes.add("playCount");
+    playCountDiv.classes.add("artistName");
     nameDiv.text = this.title;
-    playCountDiv.text = this.artist;
+    playCountDiv.text = this.artist.length > 24 ? this.artist.substring(0, 21) + "..." : this.artist;
     return metadataWrapperDiv..append(nameDiv)..append(playCountDiv);
   }
 
