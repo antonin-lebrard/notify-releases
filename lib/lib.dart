@@ -18,5 +18,5 @@ part 'mbremote.dart';
 
 
 
-Timer lastFmTimer;
-Timer mailTimer;
+TimerWrapper lastFmTimer;
+TimerWrapper mailTimer;

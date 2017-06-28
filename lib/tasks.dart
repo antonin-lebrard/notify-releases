@@ -155,10 +155,27 @@ class ServeWebBatch {
       print("responding to request: $methodHeader");
       if (methodHeader == "getWebBatch") {
         request.response.write(await _getWebBatch());
-        request.response.close();
       }
       else if (methodHeader == "deleteReleases"){
         _decodeRequestBody(request).then(_deleteReleases);
+      }
+      else if (methodHeader == "getEmailBatchInfos"){
+        request.response.write(await _getEmailBatchInfos());
+      }
+      else if (methodHeader == "prolongEmailSending"){
+        request.response.write(await _prolongEmailSending());
+      }
+      else if (methodHeader == "shortenEmailSending"){
+        request.response.write(await _shortenEmailSending());
+      }
+      else if (methodHeader == "isEmailSendingPaused"){
+        request.response.write(_isEmailSendingPaused());
+      }
+      else if (methodHeader == "pauseEmailSending"){
+        _pauseEmailSending();
+      }
+      else if (methodHeader == "restartEmailSending"){
+        request.response.write(await _restartEmailSending());
       }
       else {
         request.response.statusCode = 400;
@@ -190,6 +207,37 @@ class ServeWebBatch {
     allBatch.removeWhere((ReleaseGroup rel) => relToDel.contains(rel));
     allBatchJson = new List.generate(allBatch.length, (int idx) => ReleaseGroup.toJSON(allBatch[idx]));
     return FileHandling.writeToFile(FileHandling.webBatchRelease, JSON.encode(allBatchJson));
+  }
+
+  static Future<String> _getEmailBatchInfos() async {
+    return JSON.encode({
+      "timeRemaining": "${mailTimer.timeRemaining.inMinutes}:${mailTimer.timeRemaining.inSeconds - mailTimer.timeRemaining.inMinutes*60}",
+      "isEmailSendingPaused": mailTimer.isPaused,
+      "nbReleasesToSend": (JSON.decode(await FileHandling.readFile(FileHandling.batchReleaseToNotify)) as List).length,
+    });
+  }
+
+  static Future<String> _prolongEmailSending(){
+    mailTimer.prolongDuration();
+    return _getEmailBatchInfos();
+  }
+
+  static Future<String> _shortenEmailSending(){
+    mailTimer.shortenDuration();
+    return _getEmailBatchInfos();
+  }
+
+  static bool _isEmailSendingPaused(){
+    return mailTimer.isPaused;
+  }
+
+  static void _pauseEmailSending(){
+    mailTimer.pause();
+  }
+
+  static Future<String> _restartEmailSending(){
+    mailTimer.restart();
+    return _getEmailBatchInfos();
   }
 
 }

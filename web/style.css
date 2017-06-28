@@ -7,12 +7,64 @@ html, body {
     padding: 0;
     font-family: 'Roboto', sans-serif;
     display: flex;
+    flex-direction: column;
 }
-#listAlbums{
+#header {
+    position: relative;
+    height: 45px;
+    display: flex;
+    margin-top: 2px;
+    align-items: center;
+    align-self: center;
+}
+#emailInfos {
+    position: relative;
+    height: 40px;
+    display: flex;
+    margin-top: 2px;
+    align-items: center;
+}
+#emailInfos > * {
+    margin-left: 2px;
+    margin-right: 2px;
+}
+.mdButton {
+    background-color: #efefef;
+    color: #000;
+    box-shadow: 1px 3px 3px 0 rgba(0,0,0,.26);
+    border-radius: 3px;
+    box-sizing: border-box;
+    position: relative;
+    outline: 0;
+    border: 0;
+    display: inline-block;
+    align-items: center;
+    padding: 0 20px;
+    margin: 0 8px;
+    line-height: 35px;
+    height: 35px;
+    white-space: nowrap;
+    min-width: 70px;
+    max-width: 100px;
+    text-align: center;
+    font-weight: 500;
+    font-size: 14px;
+    text-decoration: none;
+    text-transform: uppercase;
+    cursor: pointer;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+.mdButton:active {
+    background-color: #cbcbcb;
+    box-shadow: 0 2px 1px 0 rgba(0,0,0,.26);
+}
+#listAlbums {
     position: relative;
     display: flex;
-    width: 99%;
-    height: 99%;
+    flex-wrap: wrap;
 }
 .artist {
     border: 3px solid #fff;
