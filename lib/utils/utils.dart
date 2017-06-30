@@ -15,6 +15,10 @@ String StringFromDate(DateTime d){
   return "${d.year}-${d.month}-${d.day}";
 }
 
+int ComparableIntFromDate(DateTime d){
+  return (d.year * 10000000000) + (d.month * 100000000) + (d.day * 1000000) + (d.hour * 10000) + (d.minute * 100) + d.second;
+}
+
 Future waitForDuration(Duration d){
   Completer completer = new Completer();
   new Timer(d, () {

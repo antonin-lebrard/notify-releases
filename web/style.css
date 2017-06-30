@@ -108,13 +108,16 @@ html, body {
     height: 100%;
     z-index: -2;
     display: flex;
+    opacity: 0;
+    transition: opacity 0.3s;
 }
 .icon {
     position: absolute;
-    width: 25px;
-    height: 25px;
+    width: 26px;
+    height: 26px;
     cursor: pointer;
     background-size: contain;
+    transition: margin-left 0.5s, margin-top 0.5s;
 }
 .googleMusic {
     margin-left: 35px;
@@ -142,7 +145,7 @@ html, body {
     position: relative;
     height: 100%;
     width: 100%;
-    transition: background-size 0.5s, background-position-x 0.5s, background-position-y 0.5s;
+    transition: background-size 0.5s, background-position-x 0.5s, background-position-y 0.5s, -webkit-filter 0.1s;
     background-size: 115% 115%;
     background-clip: padding-box;
     background-position-x: -15px;

@@ -7,6 +7,7 @@ import 'package:notify_releases/utils/utils.dart';
 List<Album> releasesBatch;
 Timer timerRemainingTime;
 bool isEmailPaused;
+int middleMarginForIcons = 87;
 
 Element elementLastClicked;
 
@@ -111,7 +112,14 @@ void manualBlur(Element element){
   if (element == null) return;
   releasesBatch.forEach((Album album){
     if (album.imageWrapperDiv == element){
-      album.clickableWrapperDiv.style.zIndex = "";
+      album.icons.forEach((DivElement d){
+        d.style.marginLeft = "${middleMarginForIcons}px";
+        d.style.marginTop = "${middleMarginForIcons}px";
+      });
+      album.clickableWrapperDiv.style.opacity = "";
+      new Timer(new Duration(milliseconds: 500), (){
+        album.clickableWrapperDiv.style.zIndex = "";
+      });
       album.imageDiv.style.setProperty("-webkit-filter", "");
       album.metadataWrapperDiv.style.setProperty("-webkit-filter", "");
     }
@@ -147,10 +155,15 @@ class Album {
 
   static String ARTIST = "&&&INSERT_ARTIST_HERE&&&";
   static String ALBUM  = "&&&INSERT_ALBUM_HERE&&&";
+  static String MBID  = "&&&INSERT_MBID_HERE&&&";
 
   static String lastFMAlbumInfoUrl = "https://ws.audioscrobbler.com/2.0/?"
       "method=album.getinfo&api_key=$LastFM_API_KEY"
       "&artist=$ARTIST&album=$ALBUM&format=json";
+
+  static String lastFMArtistInfoUrl = "https://ws.audioscrobbler.com/2.0/?"
+      "method=artist.getinfo&api_key=$LastFM_API_KEY"
+      "&mbid=$MBID&format=json";
 
   static String blankCoverArtUrl = "Album_cover_with_notes_01.png";
 
@@ -167,6 +180,7 @@ class Album {
   DivElement imageWrapperDiv;
   DivElement clickableWrapperDiv;
   DivElement imageDiv;
+  List<DivElement> icons = new List();
 
   Completer _imageUrlSetCompleter;
   Future _imageDivCreated;
@@ -215,6 +229,11 @@ class Album {
     _imageUrlSetCompleter.complete();
     imageWrapperDiv.onClick.listen((_) {
       clickableWrapperDiv.style.zIndex = "1";
+      clickableWrapperDiv.style.opacity = "1";
+      icons.forEach((DivElement d) {
+        d.style.marginLeft = "";
+        d.style.marginTop = "";
+      });
       imageDiv.style.setProperty("-webkit-filter", "blur(3px)");
       metadataWrapperDiv.style.setProperty("-webkit-filter", "blur(1px)");
     });
@@ -245,8 +264,15 @@ class Album {
     deleteDiv.onClick.listen((_){
       List<Map<String, String>> encoding = new List()..add(this);
       getMethod("deleteReleases", body: JSON.encode(encoding)).then((_){
+        window.localStorage["$mbid $title"] = null;
+        window.localStorage[mbid] = null;
         getWebBatch();
       });
+    });
+    icons..add(googleMusicDiv)..add(deezerDiv)..add(spotifyDiv)..add(deleteDiv);
+    icons.forEach((DivElement d) {
+      d.style.marginLeft = "${middleMarginForIcons}px";
+      d.style.marginTop = "${middleMarginForIcons}px";
     });
     clickableWrapperDiv..append(googleMusicDiv)..append(deezerDiv)..append(spotifyDiv)..append(deleteDiv);
     return clickableWrapperDiv;
@@ -259,7 +285,33 @@ class Album {
   }
 
   String _getCachedChosenImageUrl(){
-    return window.localStorage[mbid+title];
+    String cachedUrl = window.localStorage["$mbid $title"];
+    if (cachedUrl == "" || cachedUrl == null){
+      _refreshCache().then((_){
+        if (window.localStorage["$mbid $title"] == "")
+          _putArtistImageUrl();
+      });
+    }
+    return cachedUrl;
+  }
+
+  Future _refreshCache() async {
+    int lastCacheRefresh = window.localStorage["lastCacheRefresh"] != null ?
+                           int.parse(window.localStorage["lastCacheRefresh"], onError:(_) => 0) : 0;
+    DateTime nowDate = new DateTime.now();
+    // put the date into a int : 2017-07-18 19:10,59 will becomes 20170718191059 as int;
+    int now = ComparableIntFromDate(nowDate);
+    if (now - lastCacheRefresh > 5){
+      String url = await _fetchChosenImageUrl();
+      window.localStorage["lastCacheRefresh"] = now.toString();
+      if (url != "")
+        imageDiv.style.backgroundImage = 'url("$_chosenImageUrl")';
+    }
+  }
+
+  Future _putArtistImageUrl() async {
+    String url = _getCachedArtistImageUrl() ?? await _fetchArtistImageUrl();
+    imageDiv.style.backgroundImage = 'url("$url")';
   }
 
   Future<String> _fetchChosenImageUrl() {
@@ -268,15 +320,42 @@ class Album {
         .replaceFirst(ALBUM, Uri.encodeFull(title));
     return get(lastFmAlbumInfo).then((String rep){
       Map json = JSON.decode(rep);
-      if (json.containsKey("error"))
+      if (json.containsKey("error")) {
+        window.localStorage["$mbid $title"] = "";
         return "";
+      }
       json = json["album"];
       List<Map> images = json['image'];
       if (images != null) {
         for (int i = 0; i < images.length; i++) {
           if (images[i]['size'] == "large") {
             String imageUrl = images[i]['#text'];
-            window.localStorage[mbid+title] = imageUrl;
+            window.localStorage["$mbid $title"] = imageUrl;
+            return imageUrl;
+          }
+        }
+      }
+    });
+  }
+
+  String _getCachedArtistImageUrl(){
+    return window.localStorage[mbid];
+  }
+
+  Future<String> _fetchArtistImageUrl() {
+    String lastFmArtistInfo = lastFMArtistInfoUrl
+        .replaceFirst(MBID, mbid);
+    return get(lastFmArtistInfo).then((String rep){
+      Map json = JSON.decode(rep);
+      if (json.containsKey("error"))
+        return "";
+      json = json["artist"];
+      List<Map> images = json['image'];
+      if (images != null) {
+        for (int i = 0; i < images.length; i++) {
+          if (images[i]['size'] == "large") {
+            String imageUrl = images[i]['#text'];
+            window.localStorage[mbid] = imageUrl;
             return imageUrl;
           }
         }
