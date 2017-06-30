@@ -12,7 +12,8 @@ Element elementLastClicked;
 
 Future<String> get(String url, {Map<String, String> headers, String body}){
   Completer completer = new Completer<String>();
-  HttpRequest req = new HttpRequest()..open("GET", url);
+  String method = body == null ? "GET" : "POST";
+  HttpRequest req = new HttpRequest()..open(method, url);
   headers?.forEach((String key, String value){
     req.setRequestHeader(key, value);
   });

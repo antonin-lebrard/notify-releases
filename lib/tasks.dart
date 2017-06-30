@@ -143,56 +143,15 @@ class MailBatchTask {
 class ServeWebBatch {
 
   static Future doTask() async {
-    HttpServer server = await HttpServer.bind("localhost", 9100);
-    print("Server listening on localhost:9100");
-    server.listen((HttpRequest request) async {
-      _addCorsHeaders(request);
-      if (request.method == "OPTIONS"){
-        request.response.close();
-        return;
-      }
-      String methodHeader = request.headers["method"].first;
-      print("responding to request: $methodHeader");
-      if (methodHeader == "getWebBatch") {
-        request.response.write(await _getWebBatch());
-      }
-      else if (methodHeader == "deleteReleases"){
-        _decodeRequestBody(request).then(_deleteReleases);
-      }
-      else if (methodHeader == "getEmailBatchInfos"){
-        request.response.write(await _getEmailBatchInfos());
-      }
-      else if (methodHeader == "prolongEmailSending"){
-        request.response.write(await _prolongEmailSending());
-      }
-      else if (methodHeader == "shortenEmailSending"){
-        request.response.write(await _shortenEmailSending());
-      }
-      else if (methodHeader == "isEmailSendingPaused"){
-        request.response.write(_isEmailSendingPaused());
-      }
-      else if (methodHeader == "pauseEmailSending"){
-        _pauseEmailSending();
-      }
-      else if (methodHeader == "restartEmailSending"){
-        request.response.write(await _restartEmailSending());
-      }
-      else {
-        request.response.statusCode = 400;
-        request.response.reasonPhrase = "This method does not exist";
-      }
-      request.response.close();
-    });
-  }
-
-  static void _addCorsHeaders(HttpRequest request){
-    request.response.headers.set("Allow", "OPTIONS,GET,POST");
-    request.response.headers.set("Access-Control-Allow-Origin", "*");
-    request.response.headers.set("Access-Control-Allow-Headers", "method");
-  }
-
-  static Future<String> _decodeRequestBody(HttpRequest request) async {
-    return UTF8.decoder.bind(request).single;
+    SimpleHttpServer server = new SimpleHttpServer();
+    await server.bindHttpServer(9100);
+    server..addGetHandler(_getWebBatch, "getWebBatch")
+          ..addGetHandler(_getEmailBatchInfos, "getEmailBatchInfos")
+          ..addGetHandler(_prolongEmailSending, "prolongEmailSending")
+          ..addGetHandler(_shortenEmailSending, "shortenEmailSending")
+          ..addGetHandler(_pauseEmailSending, "pauseEmailSending")
+          ..addGetHandler(_restartEmailSending, "restartEmailSending")
+          ..addPostHandler(_deleteReleases, "deleteReleases");
   }
 
   static Future<String> _getWebBatch(){
@@ -227,12 +186,9 @@ class ServeWebBatch {
     return _getEmailBatchInfos();
   }
 
-  static bool _isEmailSendingPaused(){
-    return mailTimer.isPaused;
-  }
-
-  static void _pauseEmailSending(){
+  static Future<String> _pauseEmailSending(){
     mailTimer.pause();
+    return new Future.value("");
   }
 
   static Future<String> _restartEmailSending(){
