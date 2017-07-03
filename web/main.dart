@@ -112,16 +112,7 @@ void manualBlur(Element element){
   if (element == null) return;
   releasesBatch.forEach((Album album){
     if (album.imageWrapperDiv == element){
-      album.icons.forEach((DivElement d){
-        d.style.marginLeft = "${middleMarginForIcons}px";
-        d.style.marginTop = "${middleMarginForIcons}px";
-      });
-      album.clickableWrapperDiv.style.opacity = "";
-      new Timer(new Duration(milliseconds: 500), (){
-        album.clickableWrapperDiv.style.zIndex = "";
-      });
-      album.imageDiv.style.setProperty("-webkit-filter", "");
-      album.metadataWrapperDiv.style.setProperty("-webkit-filter", "");
+      album.blur();
     }
   });
 }
@@ -221,6 +212,30 @@ class Album {
     return metadataWrapperDiv..append(titleDiv)..append(artistNameDiv);
   }
 
+  void blur(){
+    icons.forEach((DivElement d){
+      d.style.marginLeft = "${middleMarginForIcons}px";
+      d.style.marginTop = "${middleMarginForIcons}px";
+    });
+    clickableWrapperDiv.style.opacity = "";
+    new Timer(new Duration(milliseconds: 500), (){
+      clickableWrapperDiv.style.zIndex = "";
+    });
+    imageDiv.style.setProperty("-webkit-filter", "");
+    metadataWrapperDiv.style.setProperty("-webkit-filter", "");
+  }
+
+  void focus(){
+    clickableWrapperDiv.style.zIndex = "1";
+    clickableWrapperDiv.style.opacity = "1";
+    icons.forEach((DivElement d) {
+      d.style.marginLeft = "";
+      d.style.marginTop = "";
+    });
+    imageDiv.style.setProperty("-webkit-filter", "blur(3px)");
+    metadataWrapperDiv.style.setProperty("-webkit-filter", "blur(1px)");
+  }
+
   DivElement _imageDiv(){
     imageWrapperDiv = new DivElement();
     imageWrapperDiv.classes.add("imageWrapper");
@@ -228,14 +243,7 @@ class Album {
     imageDiv.classes.add("image");
     _imageUrlSetCompleter.complete();
     imageWrapperDiv.onClick.listen((_) {
-      clickableWrapperDiv.style.zIndex = "1";
-      clickableWrapperDiv.style.opacity = "1";
-      icons.forEach((DivElement d) {
-        d.style.marginLeft = "";
-        d.style.marginTop = "";
-      });
-      imageDiv.style.setProperty("-webkit-filter", "blur(3px)");
-      metadataWrapperDiv.style.setProperty("-webkit-filter", "blur(1px)");
+      focus();
     });
     return imageWrapperDiv..append(imageDiv);
   }
