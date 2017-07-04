@@ -4,6 +4,15 @@ import 'dart:convert';
 import 'dart:async';
 import 'package:notify_releases/utils/utils.dart';
 
+/**
+ * Needed for all request to LastFM API
+ */
+String LastFM_API_KEY = "";
+/**
+ * The http address to access the controls and releases list of the program
+ */
+String httpAddressRemoteServer = "http://localhost:9100";
+
 List<Album> releasesBatch;
 Timer timerRemainingTime;
 bool isEmailPaused;
@@ -28,7 +37,7 @@ Future<String> get(String url, {Map<String, String> headers, String body}){
 }
 
 Future<String> getMethod(String method, {String body}) {
-  return get("http://localhost:9100", headers: {"method": method}, body: body);
+  return get(httpAddressRemoteServer, headers: {"method": method}, body: body);
 }
 
 void main() {
@@ -141,8 +150,6 @@ class SearchUrlHelper {
 }
 
 class Album {
-
-  static String LastFM_API_KEY = "";
 
   static String ARTIST = "&&&INSERT_ARTIST_HERE&&&";
   static String ALBUM  = "&&&INSERT_ALBUM_HERE&&&";
