@@ -319,7 +319,8 @@ class Album {
 
   Future _putArtistImageUrl() async {
     String url = _getCachedArtistImageUrl() ?? await _fetchArtistImageUrl();
-    imageDiv.style.backgroundImage = 'url("$url")';
+    if (url != "" || url != null)
+      imageDiv.style.backgroundImage = 'url("$url")';
   }
 
   Future<String> _fetchChosenImageUrl() {
