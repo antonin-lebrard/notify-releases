@@ -29,7 +29,7 @@ Some explanation for each parameter is in [this file](https://github.com/antonin
 An example of this file could be this one :
 ```json
 {
-  "lastFMApiKey": "some long line of characters and numbers"
+  "lastFMApiKey": "some long line of characters and numbers",
   "lastFMUsername": "test",
   "daysToSubtract": 30,
   "minutesUntilNextMail": 60,
