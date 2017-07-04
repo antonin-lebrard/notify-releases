@@ -56,6 +56,7 @@ class TimerWrapper {
 
   _launchPeriodicTimer(){
     launchTime = new DateTime.now();
+    isPaused = false;
     _internal = new Timer.periodic(duration, (Timer timer){
       launchTime = new DateTime.now();
       _callbackWithTimer(timer);
@@ -64,6 +65,7 @@ class TimerWrapper {
 
   _launchSimpleTimer(){
     launchTime = new DateTime.now();
+    isPaused = false;
     _internal = new Timer(duration, _callback);
   }
 
