@@ -65,7 +65,7 @@ class ReleaseGroup {
   bool operator ==(Object other) =>
       identical(this, other) ||
           other is ReleaseGroup &&
-              mbid == other.mbid && title == title;
+              mbid == other.mbid && title == other.title;
 
   ReleaseGroup(Map json, this.artist, this.mbid){
     title = json["title"];

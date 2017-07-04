@@ -279,8 +279,8 @@ class Album {
     deleteDiv.onClick.listen((_){
       List<Map<String, String>> encoding = new List()..add(this);
       getMethod("deleteReleases", body: JSON.encode(encoding)).then((_){
-        window.localStorage["$mbid $title"] = null;
-        window.localStorage[mbid] = null;
+        window.localStorage.remove("$mbid $title");
+        window.localStorage.remove(mbid);
         getWebBatch();
       });
     });
