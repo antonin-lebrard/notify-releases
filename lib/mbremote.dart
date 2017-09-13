@@ -32,6 +32,8 @@ class MBRemote {
       lastXRatelimitReset = new DateTime.fromMillisecondsSinceEpoch(convertRatelimit);
       print("ratelimit will reset in ${now.difference(lastXRatelimitReset)}");
       return resp.body;
+    }).catchError((){
+      return { "error" : "Http Error not handled by http package, surely a connection timeout" }.toString();
     });
   }
 
