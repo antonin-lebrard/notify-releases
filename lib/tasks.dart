@@ -158,7 +158,7 @@ class ServeWebBatch {
     return FileHandling.readFile(FileHandling.webBatchRelease);
   }
 
-  static Future _deleteReleases(String requestBody) async {
+  static Future<String> _deleteReleases(String requestBody) async {
     List<Map> relJsonToDel = JSON.decode(requestBody);
     List<Map> allBatchJson = JSON.decode(await FileHandling.readFile(FileHandling.webBatchRelease));
     List<ReleaseGroup> relToDel = new List.generate(relJsonToDel.length, (int idx) => new ReleaseGroup.mapWithArtistAndMbid(relJsonToDel[idx]));

@@ -40,7 +40,7 @@ class SimpleHttpServer {
         request.response.close();
         return;
       }
-      String methodHeader = request.headers["method"].first;
+      String methodHeader = request.headers["method"]?.first;
       print("responding to request: $methodHeader");
       bool responseWritten = false;
       if (request.method == "GET") {

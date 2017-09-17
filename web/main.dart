@@ -28,8 +28,13 @@ Future<String> get(String url, {Map<String, String> headers, String body}){
     req.setRequestHeader(key, value);
   });
   StreamSubscription sub;
-  sub = req.onLoad.listen((event){
-    completer.complete(event.target.responseText);
+  sub = req.onLoad.listen((_){
+    if (req.status != 200){
+      print("HTTP Request Error ${req.status}");
+      completer.completeError(req.status);
+      return;
+    }
+    completer.complete(req.responseText);
     sub.cancel();
   });
   req.send(body);
@@ -131,6 +136,9 @@ class SearchUrlHelper {
   static String googlePlayMusicSearchUrl = "https://play.google.com/music/listen?u=0#/sr/";
   static String deezerSearchUrl = "http://www.deezer.com/search/";
   static String spotifySearchUrl = "https://open.spotify.com/search/results/";
+  static String directAlbumBandcampUrl = "https://${Album.ARTIST}.bandcamp.com/album/${Album.ALBUM}";
+  static String directTrackBandcampUrl = "https://${Album.ARTIST}.bandcamp.com/track/${Album.ALBUM}";
+  static String searchBandcampUrl = "https://bandcamp.com/search?q=";
 
   static String searchGoogleMusic(String searchTerms){
     List<String> toEncode = searchTerms.split(" ");
@@ -145,6 +153,22 @@ class SearchUrlHelper {
   
   static String searchSpotify(String searchTerms){
     return spotifySearchUrl + Uri.encodeFull(searchTerms);
+  }
+
+  static Future<String> searchBandcamp(String artist, String album){
+    String directArtist = artist.split(" ").join("");
+    String directAlbum = album.split(" ").join("+");
+    String directAlbumUrl = directAlbumBandcampUrl.replaceFirst(Album.ARTIST, directArtist).replaceFirst(Album.ALBUM, directAlbum);
+    String directTrackUrl = directTrackBandcampUrl.replaceFirst(Album.ARTIST, directArtist).replaceFirst(Album.ALBUM, directAlbum);
+    return get(directAlbumUrl).then((_){
+      return directAlbumUrl;
+    }).catchError((_){
+      return get(directTrackUrl).then((_){
+        return directTrackUrl;
+      }).catchError((_){
+        return searchBandcampUrl + Uri.encodeFull(artist + " " + album);
+      });
+    });
   }
 
 }
@@ -277,7 +301,7 @@ class Album {
     deleteDiv.classes..add("icon")..add("delete");
     deleteDiv.style.backgroundImage = "url('garbage.png')";
     deleteDiv.onClick.listen((_){
-      List<Map<String, String>> encoding = new List()..add(this);
+      List<Map<String, String>> encoding = new List()..add(this.toJson());
       getMethod("deleteReleases", body: JSON.encode(encoding)).then((_){
         window.localStorage.remove("$mbid $title");
         window.localStorage.remove(mbid);
