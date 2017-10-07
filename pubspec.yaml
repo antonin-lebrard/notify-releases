@@ -17,3 +17,5 @@ dev_dependencies:
 
 transformers:
 - dart_to_js_script_rewriter
+- $dart2js:
+    commandLineOptions: [--trust-type-annotations, --trust-primitives, --fast-startup]
