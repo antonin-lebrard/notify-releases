@@ -58,8 +58,30 @@ class GenerateLastReleaseTask {
 class LastFMTask {
 
   static Future doTask() async {
-    return LastFMRemote.getArtists().then((List<Artist> artists){
-      return FileHandling.writeToFile(FileHandling.lastFMList, JSON.encode(artists, toEncodable: Artist.toJSON));
+    return LastFMRemote.getArtists().then((List<Artist> artists) async {
+      return FileHandling.writeToFile(FileHandling.lastFMList, JSON.encode(artists, toEncodable: Artist.toJSON)).then((_) async {
+        /// merge lastFMList with mbLastRelease
+        List<Map<String, String>> json = (JSON.decode(await FileHandling.readFile(FileHandling.mbLastRelease)) as List<Map<String, String>>);
+        /// keep the new artists, update playcount for the already present
+        artists.removeWhere((Artist a) {
+          Map<String, String> correspondingLastRelease = json.firstWhere((m) => m["mbid"] == a.mbid, orElse: () => null);
+          if (correspondingLastRelease == null)
+            return false;
+          /// if existent, update playcount
+          correspondingLastRelease["playcount"] = a.playCount.toString();
+          return true;
+        });
+        DateTime genDate = new DateTime.now();
+        genDate = genDate.subtract(new Duration(days: Config.daysToSubtract));
+        String lastReleaseGen = StringFromDate(genDate);
+        artists.forEach((Artist a) {
+          Map<String, String> toAdd = Artist.toJSON(a);
+          toAdd["lastRelease"] = lastReleaseGen;
+          toAdd["timestampLastChecked"] = (new DateTime.now()).millisecondsSinceEpoch.toString();
+          json.add(toAdd);
+        });
+        return FileHandling.writeToFile(FileHandling.mbLastRelease, JSON.encode(json));
+      });
     });
   }
 

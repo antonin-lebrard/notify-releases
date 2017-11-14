@@ -75,6 +75,9 @@ class MusicBrainzFetching {
           entry["lastRelease"] = StringFromDate(newLastReleaseDate);
         }
         entry["timestampLastChecked"] = (new DateTime.now()).millisecondsSinceEpoch.toString();
+        if (entry["nbTimesChecked"] == null)
+          entry["nbTimesChecked"] = "0";
+        entry["nbTimesChecked"] = int.parse(entry["nbTimesChecked"], onError: (s) => 0).toString();
         break;
       }
     }
