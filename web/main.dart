@@ -61,7 +61,9 @@ void getWebBatch(){
     releasesBatch = new List.generate(batchJson.length, (int idx) => new Album(batchJson[idx]));
     querySelector("#listAlbums").children.clear();
     for (Album album in releasesBatch){
-      querySelector("#listAlbums").append(album.createDiv());
+      if (album.first_release_date.compareTo(new DateTime.now()) <= 0) {
+        querySelector("#listAlbums").append(album.createDiv());
+      }
     }
   });
 }
