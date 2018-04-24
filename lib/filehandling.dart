@@ -1,10 +1,6 @@
 part of lib;
 
 
-enum StorageFile {
-  lastFMList
-}
-
 class FileToBlock {
   File fileToBlock;
   bool isBlocked = false;
@@ -37,17 +33,25 @@ class FileHandling {
 
   static FileToBlock webBatchRelease = new FileToBlock("webBatch.json");
 
-  static Future writeToFile(FileToBlock file, String content){
+  static Future blockedFileOperation(FileToBlock file, String processContent(String fileContent)) {
     Completer completer = new Completer();
-    if (!file.isBlocked){
-      _writeToFile(file, content);
+    if (!file.isBlocked) {
+      file.block(() {
+        String res = processContent(file.fileToBlock.readAsStringSync());
+        if (res != null)
+          file.fileToBlock.writeAsStringSync(res);
+      });
       completer.complete(null);
     } else {
       StreamSubscription<bool> sub;
-      sub = file.noLongerBlocked.listen((bool isNoLongerBlocked){
+      sub = file.noLongerBlocked.listen((bool isNoLongerBlocked) {
         if (isNoLongerBlocked) {
-          _writeToFile(file, content);
           sub.cancel();
+          file.block(() {
+            String res = processContent(file.fileToBlock.readAsStringSync());
+            if (res != null)
+              file.fileToBlock.writeAsStringSync(res);
+          });
           completer.complete(null);
         }
       });
@@ -69,12 +73,6 @@ class FileHandling {
       });
     }
     return completer.future;
-  }
-
-  static void _writeToFile(FileToBlock file, String content){
-    file.block((){
-      file.fileToBlock.writeAsStringSync(content);
-    });
   }
 
   static String _readFile(FileToBlock file){

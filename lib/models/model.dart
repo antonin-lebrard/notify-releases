@@ -23,7 +23,6 @@ class Artist {
     map["playcount"] = a.playCount.toString();
     return map;
   }
-
 }
 
 class LastRelease {
@@ -50,7 +49,6 @@ class LastRelease {
     map["playcount"] = l.playCount.toString();
     return map;
   }
-
 }
 
 class ReleaseGroup {
@@ -59,7 +57,6 @@ class ReleaseGroup {
   String primary_type;
   String artist;
   String mbid;
-
 
   @override
   bool operator ==(Object other) =>
@@ -101,6 +98,32 @@ class ReleaseGroup {
     map["artist"] = r.artist;
     map["mbid"] = r.mbid;
     return map;
+  }
+}
+
+class User {
+  String name;
+  String url;
+  int playcount;
+
+  User(Map json) {
+    name = json["name"];
+    url = json["url"];
+    playcount = int.parse(json["playcount"] ?? "0", onError: (_) => 0);
+  }
+}
+
+class Album {
+  Artist artist;
+  String name;
+  String mbid;
+  int playcount;
+
+  Album(Map json) {
+    artist = new Artist(json["artist"]);
+    name = json["name"];
+    mbid = json["mbid"];
+    playcount = int.parse(json["playcount"] ?? "0", onError: (_) => 0);
   }
 
 }

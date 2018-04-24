@@ -68,36 +68,42 @@ class MusicBrainzFetching {
       });
       newLastReleaseDate = newReleases[0].first_release_date;
     }
-    List<Map<String, String>> json = JSON.decode(await FileHandling.readFile(FileHandling.mbLastRelease));
-    for (Map<String, String> entry in json){
-      if (entry["mbid"] == mbid){
-        if (newLastReleaseDate != null) {
-          entry["lastRelease"] = StringFromDate(newLastReleaseDate);
+    return await FileHandling.blockedFileOperation(FileHandling.mbLastRelease, (String fileContent) {
+      List<Map<String, String>> json = JSON.decode(fileContent);
+      for (Map<String, String> entry in json){
+        if (entry["mbid"] == mbid){
+          if (newLastReleaseDate != null) {
+            entry["lastRelease"] = StringFromDate(newLastReleaseDate);
+          }
+          entry["timestampLastChecked"] = (new DateTime.now()).millisecondsSinceEpoch.toString();
+          if (entry["nbTimesChecked"] == null)
+            entry["nbTimesChecked"] = "0";
+          entry["nbTimesChecked"] = int.parse(entry["nbTimesChecked"], onError: (s) => 0).toString();
+          break;
         }
-        entry["timestampLastChecked"] = (new DateTime.now()).millisecondsSinceEpoch.toString();
-        if (entry["nbTimesChecked"] == null)
-          entry["nbTimesChecked"] = "0";
-        entry["nbTimesChecked"] = int.parse(entry["nbTimesChecked"], onError: (s) => 0).toString();
-        break;
       }
-    }
-    return FileHandling.writeToFile(FileHandling.mbLastRelease, JSON.encode(json));
+      return JSON.encode(json);
+    });
   }
 
   static Future _saveIntoBatchReleases(List<ReleaseGroup> toSave) async {
     if (toSave.length == 0)
       return new Future.value(null);
-    List<Map> jsonRel = JSON.decode(await FileHandling.readFile(FileHandling.batchReleaseToNotify));
-    jsonRel.addAll(new List.generate(toSave.length, (int idx) => ReleaseGroup.toJSON(toSave[idx])));
-    return FileHandling.writeToFile(FileHandling.batchReleaseToNotify, JSON.encode(jsonRel));
+    return await FileHandling.blockedFileOperation(FileHandling.batchReleaseToNotify, (String fileContent) {
+      List<Map> jsonRel = JSON.decode(fileContent);
+      jsonRel.addAll(new List.generate(toSave.length, (int idx) => ReleaseGroup.toJSON(toSave[idx])));
+      return JSON.encode(jsonRel);
+    });
   }
 
   static Future _saveIntoWebBatchReleases(String mbid, List<ReleaseGroup> toSave) async {
     if (toSave.length == 0)
       return new Future.value(null);
-    List<Map> jsonRel = JSON.decode(await FileHandling.readFile(FileHandling.webBatchRelease));
-    jsonRel.addAll(new List.generate(toSave.length, (int idx) => ReleaseGroup.toJSON(toSave[idx])));
-    return FileHandling.writeToFile(FileHandling.webBatchRelease, JSON.encode(jsonRel));
+    return await FileHandling.blockedFileOperation(FileHandling.webBatchRelease, (String fileContent) {
+      List<Map> jsonRel = JSON.decode(fileContent);
+      jsonRel.addAll(new List.generate(toSave.length, (int idx) => ReleaseGroup.toJSON(toSave[idx])));
+      return JSON.encode(jsonRel);
+    });
   }
 
 }
