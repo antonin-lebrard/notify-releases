@@ -74,19 +74,24 @@ void getEmailBatchInfos(){
 
 void handleEmailBatchInfos(String bodyRep){
   Map json = JSON.decode(bodyRep);
-  List<String> timeRemainingString = json["timeRemaining"].split(":");
-  Duration timeRemaining = new Duration(minutes: int.parse(timeRemainingString[0]),
-      seconds: int.parse(timeRemainingString[1]));
-  isEmailPaused = json["isEmailSendingPaused"];
-  int nbReleasesToSend = json["nbReleasesToSend"];
-  if (!isEmailPaused)
-    launchTimeRemainingTimer(timeRemaining);
-  else {
+  if (json["timeRemaining"] == "Not enabled") {
     querySelector('#timeRemaining').innerHtml = "N/A";
-    timerRemainingTime?.cancel();
+    querySelector("#nbAlbumsToNotifyEmail").innerHtml = "0";
+  } else {
+    List<String> timeRemainingString = json["timeRemaining"].split(":");
+    Duration timeRemaining = new Duration(minutes: int.parse(timeRemainingString[0]),
+        seconds: int.parse(timeRemainingString[1]));
+    isEmailPaused = json["isEmailSendingPaused"];
+    int nbReleasesToSend = json["nbReleasesToSend"];
+    if (!isEmailPaused)
+      launchTimeRemainingTimer(timeRemaining);
+    else {
+      querySelector('#timeRemaining').innerHtml = "N/A";
+      timerRemainingTime?.cancel();
+    }
+    querySelector("#nbAlbumsToNotifyEmail").innerHtml = nbReleasesToSend.toString();
+    querySelector("#pauseRestartBtn").innerHtml = isEmailPaused ? "Restart" : "Pause";
   }
-  querySelector("#nbAlbumsToNotifyEmail").innerHtml = nbReleasesToSend.toString();
-  querySelector("#pauseRestartBtn").innerHtml = isEmailPaused ? "Restart" : "Pause";
 }
 
 void launchTimeRemainingTimer(Duration duration){

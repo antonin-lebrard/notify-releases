@@ -212,6 +212,13 @@ class ServeWebBatch {
   }
 
   static Future<String> _getEmailBatchInfos() async {
+    if (mailTimer == null) {
+      return JSON.encode({
+        "timeRemaining": "Not enabled",
+        "isEmailSendingPaused": true,
+        "nbReleasesToSend": 0,
+      });
+    }
     return JSON.encode({
       "timeRemaining": "${mailTimer.timeRemaining.inMinutes}:${mailTimer.timeRemaining.inSeconds - mailTimer.timeRemaining.inMinutes*60}",
       "isEmailSendingPaused": mailTimer.isPaused,
@@ -220,22 +227,22 @@ class ServeWebBatch {
   }
 
   static Future<String> _prolongEmailSending(){
-    mailTimer.prolongDuration();
+    mailTimer?.prolongDuration();
     return _getEmailBatchInfos();
   }
 
   static Future<String> _shortenEmailSending(){
-    mailTimer.shortenDuration();
+    mailTimer?.shortenDuration();
     return _getEmailBatchInfos();
   }
 
   static Future<String> _pauseEmailSending(){
-    mailTimer.pause();
+    mailTimer?.pause();
     return new Future.value("");
   }
 
   static Future<String> _restartEmailSending(){
-    mailTimer.restart();
+    mailTimer?.restart();
     return _getEmailBatchInfos();
   }
 
