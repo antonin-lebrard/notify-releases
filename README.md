@@ -34,7 +34,7 @@ An example of this file <b>with</b> mail notifications enabled could be this one
   "daysToSubtract": 30,
   "minutesUntilNextMail": 60,
   "minPlayCountToNotify": 10,
-  "mailNotificationEnabled: true,
+  "mailNotificationEnabled": true,
   "mailSmtpHostname": "smtp.gmail.com",
   "mailSmtpPort": 465,
   "mailSmtpSecured": true,
@@ -52,7 +52,7 @@ Or an example of this file <b>without</b> mail notifications enabled could be th
   "daysToSubtract": 30,
   "minutesUntilNextMail": 60,
   "minPlayCountToNotify": 10,
-  "mailNotificationEnabled: false
+  "mailNotificationEnabled": false
 }
 ```
 
