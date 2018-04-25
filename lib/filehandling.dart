@@ -33,6 +33,14 @@ class FileHandling {
 
   static FileToBlock webBatchRelease = new FileToBlock("webBatch.json");
 
+  /**
+   * Perform a guaranteed sequential read and write of the [file].
+   * The [processContent] function receives the content of the [file],
+   * it should return a String corresponding to what's should be written in the [file]
+   *
+   * This function assures the user that between the read and the write,
+   * the [file] will not be modified by another part of the app
+   */
   static Future blockedFileOperation(FileToBlock file, String processContent(String fileContent)) {
     Completer completer = new Completer();
     if (!file.isBlocked) {

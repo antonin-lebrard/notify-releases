@@ -4,15 +4,14 @@ part of lib;
 
 class LastFMRemote {
 
-  static String _lastFmUri(String method, [Map<String, String> queryParams]) {
-    String apiMethod = "&&&METHOD&&&";
-    String lastfmBaseUrl = "http://ws.audioscrobbler.com/2.0/?method=${apiMethod}&api_key=${Config.lastFMApiKey}";
+  static String _lastFmUri(String method, [Map<String, dynamic> queryParams]) {
+    String lastfmBaseUrl = "http://ws.audioscrobbler.com/2.0/?method=${method}&api_key=${Config.lastFMApiKey}";
 
     if (queryParams == null || queryParams.isEmpty) {
       return "$lastfmBaseUrl&format=json";
     }
     String params = "";
-    queryParams.forEach((String key, String value) {
+    queryParams.forEach((String key, dynamic value) {
       params += "&$key=$value";
     });
     return "$lastfmBaseUrl$params&format=json";

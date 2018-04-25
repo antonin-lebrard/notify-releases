@@ -10,7 +10,8 @@ main(List<String> args) async {
 
   ServeWebBatch.doTask();
   lastFmTimer = new TimerWrapper.periodic(new Duration(days: 1), (_) => LastFMTask.doTask());
-  mailTimer = new TimerWrapper.periodic(new Duration(minutes: Config.minutesUntilNextMail), (_) => MailBatchTask.doTask());
+  if (Config.mailNotificationEnabled)
+    mailTimer = new TimerWrapper.periodic(new Duration(minutes: Config.minutesUntilNextMail), (_) => MailBatchTask.doTask());
 
   WhileTrueMBCheckTask.continuousMBCheckTask();
 }

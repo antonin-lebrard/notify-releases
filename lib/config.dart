@@ -34,9 +34,12 @@ class Config {
    */
   static int minPlayCountToNotify = 20;
 
-  /// -----------------------------
-  /// These are the parameters for the smtp server used to deliver new releases by mail
-  /// -----------------------------
+  /**
+   * Is the notification by email enabled ?
+   * If this is not the case, no need to fill the next parameters,
+   * they will never be used
+   */
+  static bool mailNotificationEnabled = false;
 
   /**
    * The smtp server hostname like "smtp.gmail.com" for example
@@ -82,6 +85,7 @@ class Config {
     daysToSubtract = json["daysToSubtract"] ?? 30;
     minutesUntilNextMail = json["minutesUntilNextMail"] ?? 60;
     minPlayCountToNotify = json["minPlayCountToNotify"] ?? 20;
+    mailNotificationEnabled = json["mailNotificationEnabled"] ?? false;
     mailSmtpHostname = json["mailSmtpHostname"] ?? "";
     mailSmtpPort = json["mailSmtpPort"] ?? 465;
     mailSmtpSecured = json["mailSmtpSecured"] ?? true;

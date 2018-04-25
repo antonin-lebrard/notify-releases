@@ -35,21 +35,19 @@ class FirstLaunchTask {
 class GenerateLastReleaseTask {
 
   static Future doTask() async {
-    return await FileHandling.blockedFileOperation(FileHandling.lastFMList, (String fileContent) {
-      List<Map<String, String>> artistsJson = JSON.decode(fileContent);
-      /// set lastRelease some time before for every artist, configurable
-      DateTime genDate = new DateTime.now();
-      genDate = genDate.subtract(new Duration(days: Config.daysToSubtract));
-      String lastReleaseGen = StringFromDate(genDate);
-      /// generate LastReleases list
-      List<LastRelease> lastReleases = new List.generate(artistsJson.length, (int idx){
-        artistsJson[idx]["lastRelease"] = lastReleaseGen;
-        artistsJson[idx]["timestampLastChecked"] = (new DateTime.now()).millisecondsSinceEpoch.toString();
-        return new LastRelease(artistsJson[idx]);
-      }, growable: false);
-      /// write it to file
-      return JSON.encode(lastReleases, toEncodable: LastRelease.toJSON);
-    });
+    List<Map<String, String>> artistsJson = JSON.decode(await FileHandling.readFile(FileHandling.lastFMList));
+    /// set lastRelease some time before for every artist, configurable
+    DateTime genDate = new DateTime.now();
+    genDate = genDate.subtract(new Duration(days: Config.daysToSubtract));
+    String lastReleaseGen = StringFromDate(genDate);
+    /// generate LastReleases list
+    List<LastRelease> lastReleases = new List.generate(artistsJson.length, (int idx){
+      artistsJson[idx]["lastRelease"] = lastReleaseGen;
+      artistsJson[idx]["timestampLastChecked"] = (new DateTime.now()).millisecondsSinceEpoch.toString();
+      return new LastRelease(artistsJson[idx]);
+    }, growable: false);
+    /// write it to file
+    return FileHandling.blockedFileOperation(FileHandling.mbLastRelease, (_) => JSON.encode(lastReleases, toEncodable: LastRelease.toJSON));
   }
 
 }
@@ -59,11 +57,17 @@ class GenerateLastReleaseTask {
  */
 class LastFMTask {
 
-  static Future doTask() async {
+  static Future doTask([bool firstLaunch = false]) async {
     return LastFMRemote.getArtists().then((List<Artist> artists) async {
       await FileHandling.blockedFileOperation(FileHandling.lastFMList, (String fileContent) {
         return JSON.encode(artists, toEncodable: Artist.toJSON);
       });
+      /// stops here if this is the first launch
+      if (firstLaunch) {
+        return new Future.value(null);
+      }
+      /// this next part is to update our mbLastRelease file,
+      /// with any updates in the listening habits of our lastfm user
       return await FileHandling.blockedFileOperation(FileHandling.mbLastRelease, (String fileContent) {
         /// merge lastFMList with mbLastRelease
         List<Map<String, String>> json = (JSON.decode(fileContent) as List<Map<String, String>>);

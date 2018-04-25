@@ -2,6 +2,7 @@
   "lastFMApiKey": "",
   "lastFMUsername": "",
   "daysToSubtract": 30,
+  "mailNotificationEnabled": false,
   "mailSmtpHostname": "",
   "mailSmtpPort": 465,
   "mailSmtpSecured": true,
