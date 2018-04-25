@@ -7,14 +7,14 @@ The list is updated each day.
 
 Then the program will launch regular request to the MusicBrainz API to check any new release of each artist, one artist per request.
 
-And every 30 minutes it will send a mail with the new releases it has found since then.
+<b>Now Optional:</b> And every 30 minutes it will send a mail with the new releases it has found since then.
 
 ### What is needed to launch it :
 
 - The [DartSDK](https://www.dartlang.org/install)
 - A [LastFM](https://www.last.fm) account, and an LastFM API key you can get by filling this form [LastFM API](https://www.last.fm/api/account/create) 
-- A mail account to use to deliver the new releases (you have to know the smtp adress of the mail provider you use)
-- The email address of your mail account on which you want to receive the new releases mails
+- <b>Now Optional:</b> A mail account to use to deliver the new releases (you have to know the smtp adress of the mail provider you use)
+- <b>Now Optional:</b> The email address of your mail account on which you want to receive the new releases mails
 
 ### How to use it : 
 
@@ -24,9 +24,9 @@ Download it somewhere, then launch the `pub get` command to get the dependencies
 ```
 Then go inside the `bin` folder and edit the [config.json](https://github.com/antonin-lebrard/notify-releases/blob/master/bin/config.json) file
 
-Some explanation for each parameter is in [this file](https://github.com/antonin-lebrard/notify-releases/blob/master/lib/config.dart)
+Some explanations for each parameter are in [this file](https://github.com/antonin-lebrard/notify-releases/blob/master/lib/config.dart)
 
-An example of this file could be this one :
+An example of this file <b>with</b> mail notifications enabled could be this one :
 ```json
 {
   "lastFMApiKey": "some long line of characters and numbers",
@@ -34,12 +34,25 @@ An example of this file could be this one :
   "daysToSubtract": 30,
   "minutesUntilNextMail": 60,
   "minPlayCountToNotify": 10,
+  "mailNotificationEnabled: true,
   "mailSmtpHostname": "smtp.gmail.com",
   "mailSmtpPort": 465,
   "mailSmtpSecured": true,
   "mailSmtpUsername": "GmailUsername",
   "mailSmtpPassword": "GmailPassword",
   "mailAddressToContactForNewReleases": "my.main.address@hotmail.com"
+}
+```
+
+Or an example of this file <b>without</b> mail notifications enabled could be this one :
+```json
+{
+  "lastFMApiKey": "some long line of characters and numbers",
+  "lastFMUsername": "test",
+  "daysToSubtract": 30,
+  "minutesUntilNextMail": 60,
+  "minPlayCountToNotify": 10,
+  "mailNotificationEnabled: false
 }
 ```
 
