@@ -13,8 +13,8 @@ class MusicBrainzFetching {
     }
     return Future.wait([
           _saveNewLastReleaseDate(mbid, saving),
-          _saveIntoBatchReleases(saving),
-          _saveIntoWebBatchReleases(mbid, saving)
+          saveIntoBatchReleases(saving),
+          saveIntoWebBatchReleases(saving)
     ]);
   }
 
@@ -86,7 +86,7 @@ class MusicBrainzFetching {
     });
   }
 
-  static Future _saveIntoBatchReleases(List<ReleaseGroup> toSave) async {
+  static Future saveIntoBatchReleases(List<ReleaseGroup> toSave) async {
     if (toSave.length == 0)
       return new Future.value(null);
     return await FileHandling.blockedFileOperation(FileHandling.batchReleaseToNotify, (String fileContent) {
@@ -96,7 +96,7 @@ class MusicBrainzFetching {
     });
   }
 
-  static Future _saveIntoWebBatchReleases(String mbid, List<ReleaseGroup> toSave) async {
+  static Future saveIntoWebBatchReleases(List<ReleaseGroup> toSave) async {
     if (toSave.length == 0)
       return new Future.value(null);
     return await FileHandling.blockedFileOperation(FileHandling.webBatchRelease, (String fileContent) {

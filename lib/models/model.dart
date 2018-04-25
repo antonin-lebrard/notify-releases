@@ -11,7 +11,7 @@ class Artist {
   int playCount;
 
   Artist(Map json){
-    name = json["name"];
+    name = json["name"] ?? json["#text"];
     mbid = json["mbid"];
     playCount = int.parse(json["playcount"] ?? "0", onError: (_) => 0);
   }
@@ -23,6 +23,12 @@ class Artist {
     map["playcount"] = a.playCount.toString();
     return map;
   }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+          other is Artist &&
+              mbid == other.mbid && name == other.name;
 }
 
 class LastRelease {
@@ -121,9 +127,34 @@ class Album {
 
   Album(Map json) {
     artist = new Artist(json["artist"]);
-    name = json["name"];
-    mbid = json["mbid"];
+    name = json["name"] ?? json["title"];
+    mbid = json["mbid"] == "" ? null : json["mbid"];
     playcount = int.parse(json["playcount"] ?? "0", onError: (_) => 0);
   }
 
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+          other is Album &&
+              mbid == other.mbid && name == other.name && artist == other.artist;
+}
+
+class Track {
+  Artist artist;
+  String name;
+  String mbid;
+  int playcount;
+
+  Track(Map json) {
+    artist = new Artist(json["artist"]);
+    name = json["name"];
+    mbid = json["mbid"] == "" ? null : json["mbid"];
+    playcount = int.parse(json["playcount"] ?? "0", onError: (_) => 0);
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+          other is Track &&
+              mbid == other.mbid && name == other.name && artist == other.artist;
 }

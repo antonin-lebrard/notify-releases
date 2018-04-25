@@ -62,6 +62,23 @@ class LastFMRemote {
     return completer.future;
   }
 
+  static Future<Map> _commonFetch(String url, String topLevelKey) {
+    Completer<Map> completer = new Completer();
+    http.get(url).then((http.Response resp) {
+      Map body = JSON.decode(resp.body);
+      /// error case (actually not handled for now)
+      if (body.containsKey("error")) {
+        print(url);
+        print(body);
+        return completer.completeError(new LastFMError(body["error"], body["message"]));
+      }
+      /// find the totalPages
+      body = body[topLevelKey];
+      completer.complete(body);
+    });
+    return completer.future;
+  }
+
   static Future<int> _getFriendsPage(List<User> users, int page) {
     return _commonPageFetch(
         _lastFmUri("user.getfriends", { "user": Config.lastFMUsername, "page": page }),
@@ -111,8 +128,30 @@ class LastFMRemote {
             toReturn.add(new Album(album));
           }
         }
-    ).then((_) {
-      return toReturn;
+    ).then((_) => toReturn);
+  }
+
+  static Future<List<Track>> getWeeklyTracks(String forUser) async {
+    List<Track> toReturn = new List<Track>();
+    return _commonPageFetch(
+        _lastFmUri("user.getweeklytrackchart", { "user": forUser }),
+        "weeklytrackchart",
+        "track",
+        (List<Map> tracksContent) {
+          for (Map track in tracksContent) {
+            toReturn.add(new Track(track));
+          }
+        }
+    ).then((_) => toReturn);
+  }
+
+  static Future<Album> getAlbumFromTrack(String track, String artist) {
+    return _commonFetch(
+        _lastFmUri("track.getinfo", { "artist": artist, "track": track }),
+        "track"
+    ).then((Map track) {
+      track["album"]["artist"] = track["artist"];
+      return new Album(track["album"]);
     });
   }
 

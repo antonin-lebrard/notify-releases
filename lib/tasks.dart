@@ -99,7 +99,58 @@ class LastFMTask {
 class AutoRecommendLastFMFriendsTrendsTask {
 
   static Future doTask() async {
-
+    /// get all our friends's username
+    List<User> friends = await LastFMRemote.getFriends();
+    friends.removeRange(10, 27);
+    Map<Track, int> nbFriendsByTracks = new Map<Track, int>();
+    int i = 0;
+    try {
+      await asyncForEach(friends, (friend) async {
+        /// get tracks listened last week for each of our friends
+        List<Track> weeklyAlbums = await LastFMRemote.getWeeklyTracks(friend.name);
+        print("friends charts done: ${++i}/${friends.length}");
+        weeklyAlbums.forEach((Track track) {
+          if (!nbFriendsByTracks.containsKey(track))
+            nbFriendsByTracks[track] = 1;
+          else
+            nbFriendsByTracks[track]++;
+        });
+      }, continueOnError: true);
+    } catch (error, stacktrace) {
+      print(error);
+      print(stacktrace);
+    }
+    List<Track> trendingTracks = new List<Track>();
+    /// filter out tracks listened by only one of our friends
+    nbFriendsByTracks.forEach((t, nb) {
+      if (trendingTracks.length < 2) trendingTracks.add(t);
+    });
+    nbFriendsByTracks.clear();
+    Map<String, ReleaseGroup> trendingAlbums = new Map<String, ReleaseGroup>();
+    try {
+      await asyncForEach(trendingTracks, (Track track) async {
+        /// get the album associated with each track
+        Album album = await LastFMRemote.getAlbumFromTrack(track.name, track.artist.name);
+        Map convertToReleaseGroup = {
+          "title": album.name,
+          "artist": album.artist.name,
+          "mbid": album.mbid,
+          "first-release-date": StringFromDate(new DateTime.now()),
+          "primary-type": "auto_friends_recommendation"
+        };
+        /// and regroup them into unique albums (filter out duplicates)
+        trendingAlbums.putIfAbsent(album.mbid ?? album.name,
+                () => new ReleaseGroup.mapWithArtistAndMbid(convertToReleaseGroup));
+      }, continueOnError: true);
+    } catch (error, stacktrace) {
+      print(error);
+      print(stacktrace);
+    }
+    List<ReleaseGroup> rels = trendingAlbums.values.toList();
+    return Future.wait([
+      MusicBrainzFetching.saveIntoBatchReleases(rels),
+      MusicBrainzFetching.saveIntoWebBatchReleases(rels)
+    ]);
   }
 
 }
