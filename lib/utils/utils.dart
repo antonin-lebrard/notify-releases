@@ -2,6 +2,7 @@ library utils;
 
 
 import 'dart:async';
+import 'dart:io';
 
 
 
@@ -33,12 +34,13 @@ Future asyncForEach<T>(List<T> list, Future eachFn(T element), {bool continueOnE
   Completer completer = new Completer();
   StreamController<T> controller = new StreamController<T>();
   Stream<T> stream = controller.stream;
+  StreamSubscription<T> sub;
 
   Object error = null;
   StackTrace trace = null;
   int i = 0;
   /// set the 'for' loop code with the stream method
-  stream.listen((T element) async {
+  sub = stream.listen((T element) async {
     try {
       /// here is [eachFn] method called
       await eachFn(element);
@@ -49,8 +51,11 @@ Future asyncForEach<T>(List<T> list, Future eachFn(T element), {bool continueOnE
       trace = tr;
       /// the asyncForEach user will receive the error directly,
       /// instead of waiting the end of each processing
-      if (!continueOnError)
+      if (!continueOnError) {
         controller.close();
+        sub.cancel();
+        return;
+      }
     }
     /// go one step further
     i++;
@@ -72,6 +77,20 @@ Future asyncForEach<T>(List<T> list, Future eachFn(T element), {bool continueOnE
   return completer.future;
 }
 
+Future<bool> isHttpPageExists(String url) async {
+  Uri uri = Uri.parse(url);
+  HttpClient httpClient = new HttpClient();
+  try {
+    HttpClientRequest request = await httpClient.headUrl(uri);
+    HttpClientResponse response = await request.close();
+    httpClient.close();
+    return response.statusCode == 200;
+  } catch (error, stacktrace) {
+    print(error);
+    print(stacktrace);
+    return false;
+  }
+}
 
 typedef void CallbackWithTimer(Timer timer);
 typedef void Callback();

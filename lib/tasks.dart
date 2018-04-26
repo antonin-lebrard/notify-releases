@@ -101,7 +101,6 @@ class AutoRecommendLastFMFriendsTrendsTask {
   static Future doTask() async {
     /// get all our friends's username
     List<User> friends = await LastFMRemote.getFriends();
-    friends.removeRange(10, 27);
     Map<Track, int> nbFriendsByTracks = new Map<Track, int>();
     int i = 0;
     try {
@@ -123,9 +122,13 @@ class AutoRecommendLastFMFriendsTrendsTask {
     List<Track> trendingTracks = new List<Track>();
     /// filter out tracks listened by only one of our friends
     nbFriendsByTracks.forEach((t, nb) {
-      if (trendingTracks.length < 2) trendingTracks.add(t);
+      if (nb > 1) trendingTracks.add(t);
     });
     nbFriendsByTracks.clear();
+    if (trendingTracks.length == 0) {
+      print("no trending tracks found on friends weekly charts");
+      return new Future.value(null);
+    }
     Map<String, ReleaseGroup> trendingAlbums = new Map<String, ReleaseGroup>();
     try {
       await asyncForEach(trendingTracks, (Track track) async {
@@ -147,6 +150,7 @@ class AutoRecommendLastFMFriendsTrendsTask {
       print(stacktrace);
     }
     List<ReleaseGroup> rels = trendingAlbums.values.toList();
+    print("found ${rels.length} albums trending in friends weekly charts");
     return Future.wait([
       MusicBrainzFetching.saveIntoBatchReleases(rels),
       MusicBrainzFetching.saveIntoWebBatchReleases(rels)

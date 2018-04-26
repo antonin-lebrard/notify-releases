@@ -1,6 +1,7 @@
 library models;
 
 
+import 'dart:async';
 import 'package:notify_releases/utils/utils.dart';
 
 
@@ -63,6 +64,13 @@ class ReleaseGroup {
   String primary_type;
   String artist;
   String mbid;
+  String bandcampUrl;
+
+  static String ARTIST = "&&&INSERT_ARTIST_HERE&&&";
+  static String ALBUM  = "&&&INSERT_ALBUM_HERE&&&";
+  static String directAlbumBandcampUrl = "https://${ARTIST}.bandcamp.com/album/${ALBUM}";
+  static String directTrackBandcampUrl = "https://${ARTIST}.bandcamp.com/track/${ALBUM}";
+  static String searchBandcampUrl = "https://bandcamp.com/search?q=";
 
   @override
   bool operator ==(Object other) =>
@@ -70,10 +78,11 @@ class ReleaseGroup {
           other is ReleaseGroup &&
               mbid == other.mbid && title == other.title;
 
-  ReleaseGroup(Map json, this.artist, this.mbid){
+  ReleaseGroup(Map json, this.artist, this.mbid) {
     title = json["title"];
     first_release_date = DateFromString(json["first-release-date"]);
     primary_type = json["primary-type"];
+    bandcampUrl = json["bandcampUrl"];
     if (json["secondary-types"] != null){
       List<String> secondaryTypes = json["secondary-types"];
       if (secondaryTypes.length == 0)
@@ -82,18 +91,33 @@ class ReleaseGroup {
     }
   }
 
-  ReleaseGroup.mapWithArtistAndMbid(Map json){
+  ReleaseGroup.mapWithArtistAndMbid(Map json) {
     title = json["title"];
     first_release_date = DateFromString(json["first-release-date"]);
     primary_type = json["primary-type"];
     artist = json["artist"];
     mbid = json["mbid"];
+    bandcampUrl = json["bandcampUrl"];
     if (json["secondary-types"] != null){
       List<String> secondaryTypes = json["secondary-types"];
       if (secondaryTypes.length == 0)
         return;
       primary_type = secondaryTypes[0];
     }
+  }
+
+  Future prepareBandcamp() async {
+    bandcampUrl = await searchBandcamp(this.artist, this.title);
+  }
+
+  static Future<String> searchBandcamp(String artist, String album) async {
+    String directArtist = artist.split(" ").join("").toLowerCase();
+    String directAlbum = album.split(" ").join("+").toLowerCase();
+    String directAlbumUrl = directAlbumBandcampUrl.replaceFirst(ARTIST, directArtist).replaceFirst(ALBUM, directAlbum);
+    String directTrackUrl = directTrackBandcampUrl.replaceFirst(ARTIST, directArtist).replaceFirst(ALBUM, directAlbum);
+    if (await isHttpPageExists(directAlbumUrl)) return directAlbumUrl;
+    if (await isHttpPageExists(directTrackUrl)) return directTrackUrl;
+    return searchBandcampUrl + Uri.encodeFull(artist + " " + album);
   }
 
   static Map<String, String> toJSON(ReleaseGroup r){
@@ -103,6 +127,7 @@ class ReleaseGroup {
     map["primary-type"] = r.primary_type;
     map["artist"] = r.artist;
     map["mbid"] = r.mbid;
+    map["bandcampUrl"] = r.bandcampUrl;
     return map;
   }
 }

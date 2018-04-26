@@ -13,14 +13,26 @@ class FileToBlock {
       fileToBlock = new File("bin/" + path);
     noLongerBlocked = _noLongerBlocked.stream;
   }
-  /// [toDoDuringBlock] has to be synced
-  String block(String toDoDuringBlock()) {
+
+  /**
+   * [toDoDuringBlock] has to be synced
+   */
+  dynamic block(dynamic toDoDuringBlock()) {
     isBlocked = true;
-    String res = toDoDuringBlock();
+    dynamic res = toDoDuringBlock();
     isBlocked = false;
     _noLongerBlocked.add(true);
     return res;
   }
+
+  Future<dynamic> asyncBlock(Future<dynamic> toDoDuringBlock()) async {
+    isBlocked = true;
+    dynamic res = await toDoDuringBlock();
+    isBlocked = false;
+    _noLongerBlocked.add(true);
+    return res;
+  }
+
 }
 
 class FileHandling {
@@ -37,6 +49,7 @@ class FileHandling {
    * Perform a guaranteed sequential read and write of the [file].
    * The [processContent] function receives the content of the [file],
    * it should return a String corresponding to what's should be written in the [file]
+   * Only returning null will not trigger the write
    *
    * This function assures the user that between the read and the write,
    * the [file] will not be modified by another part of the app
@@ -45,9 +58,14 @@ class FileHandling {
     Completer completer = new Completer();
     if (!file.isBlocked) {
       file.block(() {
-        String res = processContent(file.fileToBlock.readAsStringSync());
-        if (res != null)
-          file.fileToBlock.writeAsStringSync(res);
+        try {
+          String res = processContent(file.fileToBlock.readAsStringSync());
+          if (res != null)
+            file.fileToBlock.writeAsStringSync(res);
+        } catch (error, stacktrace) {
+          print(error);
+          print(stacktrace);
+        }
       });
       completer.complete(null);
     } else {
@@ -56,9 +74,53 @@ class FileHandling {
         if (isNoLongerBlocked) {
           sub.cancel();
           file.block(() {
-            String res = processContent(file.fileToBlock.readAsStringSync());
-            if (res != null)
-              file.fileToBlock.writeAsStringSync(res);
+            try {
+              String res = processContent(file.fileToBlock.readAsStringSync());
+              if (res != null)
+                file.fileToBlock.writeAsStringSync(res);
+            } catch (error, stacktrace) {
+              print(error);
+              print(stacktrace);
+            }
+          });
+          completer.complete(null);
+        }
+      });
+    }
+    return completer.future;
+  }
+
+  /**
+   * Same as [blockedFileOperation] but accepts an async [processContent] function
+   */
+  static Future blockedAsyncFileOperation(FileToBlock file, Future<String> processContent(String fileContent)) async {
+    Completer completer = new Completer();
+    if (!file.isBlocked) {
+      file.asyncBlock(() async {
+        try {
+          String res = await processContent(file.fileToBlock.readAsStringSync());
+          if (res != null)
+            file.fileToBlock.writeAsStringSync(res);
+        } catch (error, stacktrace) {
+          print(error);
+          print(stacktrace);
+        }
+      });
+      completer.complete(null);
+    } else {
+      StreamSubscription<bool> sub;
+      sub = file.noLongerBlocked.listen((bool isNoLongerBlocked) async {
+        if (isNoLongerBlocked) {
+          sub.cancel();
+          file.asyncBlock(() async {
+            try {
+              String res = await processContent(file.fileToBlock.readAsStringSync());
+              if (res != null)
+                file.fileToBlock.writeAsStringSync(res);
+            } catch (error, stacktrace) {
+              print(error);
+              print(stacktrace);
+            }
           });
           completer.complete(null);
         }

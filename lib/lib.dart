@@ -21,3 +21,4 @@ part 'mbremote.dart';
 
 TimerWrapper lastFmTimer;
 TimerWrapper mailTimer;
+TimerWrapper friendsRecoTimer;

@@ -86,24 +86,33 @@ class MusicBrainzFetching {
     });
   }
 
-  static Future saveIntoBatchReleases(List<ReleaseGroup> toSave) async {
+  static Future<List<Map>> _updateMissingBandcampUrl(List<Map> jsonRels) async {
+    List<ReleaseGroup> rels = new List.generate(jsonRels.length,
+            (int idx) => new ReleaseGroup.mapWithArtistAndMbid(jsonRels[idx]));
+    await asyncForEach(rels, (ReleaseGroup rel) async => await rel.prepareBandcamp(), continueOnError: true);
+    return new List<Map>.generate(rels.length, (int idx) => ReleaseGroup.toJSON(rels[idx]));
+  }
+
+  static Future _saveIntoFile(List<ReleaseGroup> toSave, FileToBlock file) async {
     if (toSave.length == 0)
       return new Future.value(null);
-    return await FileHandling.blockedFileOperation(FileHandling.batchReleaseToNotify, (String fileContent) {
+    await asyncForEach(toSave, (ReleaseGroup rel) async => await rel.prepareBandcamp(), continueOnError: true);
+    return await FileHandling.blockedAsyncFileOperation(file, (String fileContent) async {
       List<Map> jsonRel = JSON.decode(fileContent);
+      if (jsonRel.any((Map rel) => rel["bancampUrl"] == null)) {
+        jsonRel = await _updateMissingBandcampUrl(jsonRel);
+      }
       jsonRel.addAll(new List.generate(toSave.length, (int idx) => ReleaseGroup.toJSON(toSave[idx])));
       return JSON.encode(jsonRel);
     });
   }
 
+  static Future saveIntoBatchReleases(List<ReleaseGroup> toSave) async {
+    return _saveIntoFile(toSave, FileHandling.batchReleaseToNotify);
+  }
+
   static Future saveIntoWebBatchReleases(List<ReleaseGroup> toSave) async {
-    if (toSave.length == 0)
-      return new Future.value(null);
-    return await FileHandling.blockedFileOperation(FileHandling.webBatchRelease, (String fileContent) {
-      List<Map> jsonRel = JSON.decode(fileContent);
-      jsonRel.addAll(new List.generate(toSave.length, (int idx) => ReleaseGroup.toJSON(toSave[idx])));
-      return JSON.encode(jsonRel);
-    });
+    return _saveIntoFile(toSave, FileHandling.webBatchRelease);
   }
 
 }

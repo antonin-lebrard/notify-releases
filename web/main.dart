@@ -143,8 +143,6 @@ class SearchUrlHelper {
   static String googlePlayMusicSearchUrl = "https://play.google.com/music/listen?u=0#/sr/";
   static String deezerSearchUrl = "http://www.deezer.com/search/";
   static String spotifySearchUrl = "https://open.spotify.com/search/results/";
-  static String directAlbumBandcampUrl = "https://${Album.ARTIST}.bandcamp.com/album/${Album.ALBUM}";
-  static String directTrackBandcampUrl = "https://${Album.ARTIST}.bandcamp.com/track/${Album.ALBUM}";
   static String searchBandcampUrl = "https://bandcamp.com/search?q=";
 
   static String searchGoogleMusic(String searchTerms){
@@ -162,20 +160,8 @@ class SearchUrlHelper {
     return spotifySearchUrl + Uri.encodeFull(searchTerms);
   }
 
-  static Future<String> searchBandcamp(String artist, String album){
-    String directArtist = artist.split(" ").join("");
-    String directAlbum = album.split(" ").join("+");
-    String directAlbumUrl = directAlbumBandcampUrl.replaceFirst(Album.ARTIST, directArtist).replaceFirst(Album.ALBUM, directAlbum);
-    String directTrackUrl = directTrackBandcampUrl.replaceFirst(Album.ARTIST, directArtist).replaceFirst(Album.ALBUM, directAlbum);
-    return get(directAlbumUrl).then((_){
-      return directAlbumUrl;
-    }).catchError((_){
-      return get(directTrackUrl).then((_){
-        return directTrackUrl;
-      }).catchError((_){
-        return searchBandcampUrl + Uri.encodeFull(artist + " " + album);
-      });
-    });
+  static String searchBandcamp(String searchTerms){
+    return searchBandcampUrl + Uri.encodeFull(searchTerms);
   }
 
 }
@@ -201,6 +187,7 @@ class Album {
   String primary_type;
   String artist;
   String mbid;
+  String bandcampUrl;
 
   String _chosenImageUrl;
 
@@ -222,6 +209,7 @@ class Album {
     primary_type = json["primary-type"];
     artist = json["artist"];
     mbid = json["mbid"];
+    bandcampUrl = json["bandcampUrl"];
     getImageUrl().then((_){
       _imageDivCreated.then((_){
         imageDiv.style.backgroundImage = 'url("$_chosenImageUrl")';
@@ -286,7 +274,7 @@ class Album {
     return imageWrapperDiv..append(imageDiv);
   }
 
-  DivElement _clickableLinksDiv(){
+  DivElement _clickableLinksDiv() {
     clickableWrapperDiv = new DivElement();
     clickableWrapperDiv.classes.add("clickableWrapper");
     DivElement googleMusicDiv = new DivElement();
@@ -299,11 +287,11 @@ class Album {
     deezerDiv.style.backgroundImage = "url('https://e-cdns-files.dzcdn.net/images/common/favicon/favicon-96x96-v00400039.png')";
     deezerDiv.onClick.listen((_) =>
         window.open(SearchUrlHelper.searchDeezer("$title $artist"), "Search on Deezer"));
-    DivElement spotifyDiv = new DivElement();
-    spotifyDiv.classes..add("icon")..add("spotify");
-    spotifyDiv.style.backgroundImage = "url('https://play.spotify.edgekey.net/site/e244a4f/images/favicon.png')";
-    spotifyDiv.onClick.listen((_) =>
-        window.open(SearchUrlHelper.searchSpotify("$title $artist"), "Search on Spotify"));
+    DivElement bandcampDiv = new DivElement();
+    bandcampDiv.classes..add("icon")..add("bandcamp");
+    bandcampDiv.style.backgroundImage = "url('https://s4.bcbits.com/img/bc_favicon.ico')";
+    bandcampDiv.onClick.listen((_) =>
+        window.open(bandcampUrl ?? SearchUrlHelper.searchBandcamp("$artist $title"), "Search on Bandcamp"));
     DivElement deleteDiv = new DivElement();
     deleteDiv.classes..add("icon")..add("delete");
     deleteDiv.style.backgroundImage = "url('garbage.png')";
@@ -315,12 +303,12 @@ class Album {
         getWebBatch();
       });
     });
-    icons..add(googleMusicDiv)..add(deezerDiv)..add(spotifyDiv)..add(deleteDiv);
+    icons..add(googleMusicDiv)..add(deezerDiv)..add(bandcampDiv)..add(deleteDiv);
     icons.forEach((DivElement d) {
       d.style.marginLeft = "${middleMarginForIcons}px";
       d.style.marginTop = "${middleMarginForIcons}px";
     });
-    clickableWrapperDiv..append(googleMusicDiv)..append(deezerDiv)..append(spotifyDiv)..append(deleteDiv);
+    clickableWrapperDiv..append(googleMusicDiv)..append(deezerDiv)..append(bandcampDiv)..append(deleteDiv);
     return clickableWrapperDiv;
   }
 
