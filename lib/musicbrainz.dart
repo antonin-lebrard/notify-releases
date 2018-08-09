@@ -21,7 +21,7 @@ class MusicBrainzFetching {
   static Future<List<ReleaseGroup>> getReleasesForMBid(String mbid, DateTime lastChecked, [int recursiveIndex = 1]) async {
     return MBRemote.doRequest(mbid).then((String body) async {
       Map json = JSON.decode(body);
-      if (json.containsKey("error")) {
+      if (json.containsKey("error") && json["error"] != "Not Found") {
         print(json);
         if (recursiveIndex == 20){
           print("too many tries for one mbid, will skip it now");
@@ -31,6 +31,10 @@ class MusicBrainzFetching {
         print("will wait for $duration minutes, to see if the error will dissipate");
         await waitForDuration(new Duration(minutes: duration));
         return getReleasesForMBid(mbid, lastChecked, recursiveIndex++);
+      } else if (json.containsKey("error")) {
+        print('artist not found on musicbrainz');
+        print(json);
+        return [];
       }
       String artist = json["name"];
       List<Map> jsonRel = (json["release-groups"] as List<Map>);
