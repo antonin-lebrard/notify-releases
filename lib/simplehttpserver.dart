@@ -15,6 +15,8 @@ class SimpleHttpServer {
 
   HttpServer _internalServer;
 
+  File logger;
+
   Map<String, GetCallback> _getHandlers = new Map<String, GetCallback>();
   Map<String, PostCallback> _postHandlers = new Map<String, PostCallback>();
 
@@ -27,9 +29,13 @@ class SimpleHttpServer {
   }
 
   Future bindHttpServer(int port) async {
+    logger = new File("simplehttpserverRequests.log");
+    if (!await logger.exists()) {
+      await logger.create();
+    }
     _internalServer = await HttpServer.bind("localhost", port);
     print("Server listening on localhost:$port");
-    return _doRouting();
+    _doRouting();
   }
 
   Future _doRouting() async {
@@ -57,11 +63,20 @@ class SimpleHttpServer {
           responseWritten = true;
         }
       }
-      if (!responseWritten){
+      if (!responseWritten) {
         request.response.statusCode = 400;
         request.response.reasonPhrase = "This method does not exist";
       }
       request.response.close();
+      if (!responseWritten) {
+        logger.writeAsStringSync(
+            logger.readAsStringSync() + "\n" +
+            new DateTime.now().toIso8601String() + " " +
+            request.method + " " +
+            request.uri.toString() + " " +
+            request.headers.toString().split("\n").join(" ")
+        );
+      }
     });
   }
 
