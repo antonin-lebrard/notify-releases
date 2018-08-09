@@ -9,7 +9,11 @@ class MusicBrainzFetching {
     List<ReleaseGroup> saving = new List<ReleaseGroup>();
     print("its mbid : $mbid");
     if (mbid != null || mbid != "") {
-      saving = await getReleasesForMBid(mbid, lastChecked);
+      try {
+        saving = await getReleasesForMBid(mbid, lastChecked);
+      } catch (e) {
+        return new Future.value([]);
+      }
     }
     return Future.wait([
           _saveNewLastReleaseDate(mbid, saving),
