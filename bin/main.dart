@@ -13,6 +13,7 @@ main(List<String> args) async {
           (_) => AutoRecommendLastFMFriendsTrendsTask.doTask());
   lastFmTimer = new TimerWrapper.periodic(new Duration(days: 1),
           (_) => LastFMTask.doTask());
+
   if (Config.mailNotificationEnabled)
     mailTimer = new TimerWrapper.periodic(new Duration(minutes: Config.minutesUntilNextMail),
             (_) => MailBatchTask.doTask());

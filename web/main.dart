@@ -57,8 +57,13 @@ void main() {
 
 void getWebBatch(){
   getMethod("getWebBatch").then((String rep){
-    List<Map> batchJson = JSON.decode(rep);
-    releasesBatch = new List.generate(batchJson.length, (int idx) => new Album(batchJson[idx]));
+    List<Map> batchJson = castL<Map>(json.decode(rep));
+    releasesBatch =
+      new List.generate(batchJson.length, (int idx) {
+        if (DateFromString(batchJson[idx]["first-release-date"]).compareTo(new DateTime.now()) <= 0)
+          return new Album(batchJson[idx]);
+        return null;
+      })..retainWhere((alb) => alb != null);
     querySelector("#listAlbums").children.clear();
     for (Album album in releasesBatch){
       if (album.first_release_date.compareTo(new DateTime.now()) <= 0) {
@@ -73,16 +78,18 @@ void getEmailBatchInfos(){
 }
 
 void handleEmailBatchInfos(String bodyRep){
-  Map json = JSON.decode(bodyRep);
-  if (json["timeRemaining"] == "Not enabled") {
-    querySelector('#timeRemaining').innerHtml = "N/A";
+  Map jsonMap = json.decode(bodyRep);
+  if (jsonMap["timeRemaining"] == "Not enabled") {
+    querySelector("#timeRemaining").innerHtml = "N/A";
     querySelector("#nbAlbumsToNotifyEmail").innerHtml = "0";
+    querySelector("#header").style.display = "none";
   } else {
-    List<String> timeRemainingString = json["timeRemaining"].split(":");
+    querySelector("#header").style.display = "";
+    List<String> timeRemainingString = jsonMap["timeRemaining"].split(":");
     Duration timeRemaining = new Duration(minutes: int.parse(timeRemainingString[0]),
         seconds: int.parse(timeRemainingString[1]));
-    isEmailPaused = json["isEmailSendingPaused"];
-    int nbReleasesToSend = json["nbReleasesToSend"];
+    isEmailPaused = jsonMap["isEmailSendingPaused"];
+    int nbReleasesToSend = jsonMap["nbReleasesToSend"];
     if (!isEmailPaused)
       launchTimeRemainingTimer(timeRemaining);
     else {
@@ -155,7 +162,7 @@ class SearchUrlHelper {
   static String searchDeezer(String searchTerms){
     return deezerSearchUrl + Uri.encodeFull(searchTerms);
   }
-  
+
   static String searchSpotify(String searchTerms){
     return spotifySearchUrl + Uri.encodeFull(searchTerms);
   }
@@ -217,7 +224,7 @@ class Album {
     });
   }
 
-  DivElement createDiv(){
+  DivElement createDiv() {
     artistDiv = new DivElement();
     artistDiv.classes.add("artist");
     DivElement content = new DivElement();
@@ -226,7 +233,7 @@ class Album {
     return artistDiv;
   }
 
-  DivElement _metadataDiv(){
+  DivElement _metadataDiv() {
     metadataWrapperDiv = new DivElement();
     metadataWrapperDiv.classes.add("metadataWrapper");
     DivElement titleDiv = new DivElement();
@@ -238,7 +245,7 @@ class Album {
     return metadataWrapperDiv..append(titleDiv)..append(artistNameDiv);
   }
 
-  void blur(){
+  void blur() {
     icons.forEach((DivElement d){
       d.style.marginLeft = "${middleMarginForIcons}px";
       d.style.marginTop = "${middleMarginForIcons}px";
@@ -251,7 +258,7 @@ class Album {
     metadataWrapperDiv.style.setProperty("-webkit-filter", "");
   }
 
-  void focus(){
+  void focus() {
     clickableWrapperDiv.style.zIndex = "1";
     clickableWrapperDiv.style.opacity = "1";
     icons.forEach((DivElement d) {
@@ -262,7 +269,7 @@ class Album {
     metadataWrapperDiv.style.setProperty("-webkit-filter", "blur(1px)");
   }
 
-  DivElement _imageDiv(){
+  DivElement _imageDiv() {
     imageWrapperDiv = new DivElement();
     imageWrapperDiv.classes.add("imageWrapper");
     imageDiv = new DivElement();
@@ -284,7 +291,7 @@ class Album {
         window.open(SearchUrlHelper.searchGoogleMusic("$title $artist"), "Search on Google Music"));
     DivElement deezerDiv = new DivElement();
     deezerDiv.classes..add("icon")..add("deezer");
-    deezerDiv.style.backgroundImage = "url('https://e-cdns-files.dzcdn.net/images/common/favicon/favicon-96x96-v00400039.png')";
+    deezerDiv.style.backgroundImage = "url('https://e-cdns-files.dzcdn.net/img/common/ogdeezer.jpg')";
     deezerDiv.onClick.listen((_) =>
         window.open(SearchUrlHelper.searchDeezer("$title $artist"), "Search on Deezer"));
     DivElement bandcampDiv = new DivElement();
@@ -297,7 +304,7 @@ class Album {
     deleteDiv.style.backgroundImage = "url('garbage.png')";
     deleteDiv.onClick.listen((_){
       List<Map<String, String>> encoding = new List()..add(this.toJson());
-      getMethod("deleteReleases", body: JSON.encode(encoding)).then((_){
+      getMethod("deleteReleases", body: json.encode(encoding)).then((_){
         window.localStorage.remove("$mbid $title");
         window.localStorage.remove(mbid);
         getWebBatch();
@@ -318,7 +325,7 @@ class Album {
       _chosenImageUrl = blankCoverArtUrl;
   }
 
-  String _getCachedChosenImageUrl(){
+  String _getCachedChosenImageUrl() {
     String cachedUrl = window.localStorage["$mbid $title"];
     if (cachedUrl == "" || cachedUrl == null){
       _refreshCache().then((_){
@@ -330,8 +337,10 @@ class Album {
   }
 
   Future _refreshCache() async {
-    int lastCacheRefresh = window.localStorage["lastCacheRefresh"] != null ?
-                           int.parse(window.localStorage["lastCacheRefresh"], onError:(_) => 0) : 0;
+    int lastCacheRefresh =
+      window.localStorage["lastCacheRefresh"] != null
+          ? int.parse(window.localStorage["lastCacheRefresh"], onError:(_) => 0)
+          : 0;
     DateTime nowDate = new DateTime.now();
     // put the date into a int : 2017-07-18 19:10,59 will becomes 20170718191059 as int;
     int now = ComparableIntFromDate(nowDate);
@@ -354,13 +363,13 @@ class Album {
         .replaceFirst(ARTIST, Uri.encodeFull(artist))
         .replaceFirst(ALBUM, Uri.encodeFull(title));
     return get(lastFmAlbumInfo).then((String rep){
-      Map json = JSON.decode(rep);
-      if (json.containsKey("error")) {
+      Map jsonMap = json.decode(rep);
+      if (jsonMap.containsKey("error")) {
         window.localStorage["$mbid $title"] = "";
         return "";
       }
-      json = json["album"];
-      List<Map> images = json['image'];
+      jsonMap = jsonMap["album"];
+      List<Map> images = castL<Map>(jsonMap['image']);
       if (images != null) {
         for (int i = 0; i < images.length; i++) {
           if (images[i]['size'] == "large") {
@@ -373,7 +382,7 @@ class Album {
     });
   }
 
-  String _getCachedArtistImageUrl(){
+  String _getCachedArtistImageUrl() {
     return window.localStorage[mbid];
   }
 
@@ -381,11 +390,11 @@ class Album {
     String lastFmArtistInfo = lastFMArtistInfoUrl
         .replaceFirst(MBID, mbid);
     return get(lastFmArtistInfo).then((String rep){
-      Map json = JSON.decode(rep);
-      if (json.containsKey("error"))
+      Map jsonMap = json.decode(rep);
+      if (jsonMap.containsKey("error"))
         return "";
-      json = json["artist"];
-      List<Map> images = json['image'];
+      jsonMap = jsonMap["artist"];
+      List<Map> images = castL<Map>(jsonMap['image']);
       if (images != null) {
         for (int i = 0; i < images.length; i++) {
           if (images[i]['size'] == "large") {

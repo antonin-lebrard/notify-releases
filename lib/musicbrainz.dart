@@ -16,17 +16,17 @@ class MusicBrainzFetching {
       }
     }
     return Future.wait([
-          _saveNewLastReleaseDate(mbid, saving),
-          saveIntoBatchReleases(saving),
-          saveIntoWebBatchReleases(saving)
+      _saveNewLastReleaseDate(mbid, saving),
+      saveIntoBatchReleases(saving),
+      saveIntoWebBatchReleases(saving)
     ]);
   }
 
   static Future<List<ReleaseGroup>> getReleasesForMBid(String mbid, DateTime lastChecked, [int recursiveIndex = 1]) async {
     return MBRemote.doRequest(mbid).then((String body) async {
-      Map json = JSON.decode(body);
-      if (json.containsKey("error") && json["error"] != "Not Found") {
-        print(json);
+      Map releasesJson = json.decode(body);
+      if (releasesJson.containsKey("error") && releasesJson["error"] != "Not Found") {
+        print(releasesJson);
         if (recursiveIndex == 20){
           print("too many tries for one mbid, will skip it now");
           return [];
@@ -35,15 +35,15 @@ class MusicBrainzFetching {
         print("will wait for $duration minutes, to see if the error will dissipate");
         await waitForDuration(new Duration(minutes: duration));
         return getReleasesForMBid(mbid, lastChecked, recursiveIndex++);
-      } else if (json.containsKey("error")) {
+      } else if (releasesJson.containsKey("error")) {
         print('artist not found on musicbrainz');
         print(json);
         return [];
       }
-      String artist = json["name"];
-      List<Map> jsonRel = (json["release-groups"] as List<Map>);
+      String artist = releasesJson["name"];
+      List<Map> jsonRel = castL<Map>(releasesJson["release-groups"]);
       if (jsonRel == null) {
-        print(json);
+        print(releasesJson);
         return [];
       }
       jsonRel.retainWhere((Map m) {
@@ -77,8 +77,8 @@ class MusicBrainzFetching {
       newLastReleaseDate = newReleases[0].first_release_date;
     }
     return await FileHandling.blockedFileOperation(FileHandling.mbLastRelease, (String fileContent) {
-      List<Map<String, String>> json = JSON.decode(fileContent);
-      for (Map<String, String> entry in json){
+      List<Map<String, String>> save = castML<String, String>(json.decode(fileContent));
+      for (Map<String, String> entry in save){
         if (entry["mbid"] == mbid){
           if (newLastReleaseDate != null) {
             entry["lastRelease"] = StringFromDate(newLastReleaseDate);
@@ -86,11 +86,10 @@ class MusicBrainzFetching {
           entry["timestampLastChecked"] = (new DateTime.now()).millisecondsSinceEpoch.toString();
           if (entry["nbTimesChecked"] == null)
             entry["nbTimesChecked"] = "0";
-          entry["nbTimesChecked"] = int.parse(entry["nbTimesChecked"], onError: (s) => 0).toString();
-          break;
+          entry["nbTimesChecked"] = (int.parse(entry["nbTimesChecked"], onError: (s) => 0) + 1).toString();
         }
       }
-      return JSON.encode(json);
+      return json.encode(save);
     });
   }
 
@@ -98,7 +97,7 @@ class MusicBrainzFetching {
     List<ReleaseGroup> rels = new List.generate(jsonRels.length,
             (int idx) => new ReleaseGroup.mapWithArtistAndMbid(jsonRels[idx]));
     await asyncForEach(rels, (ReleaseGroup rel) async => await rel.prepareBandcamp(), continueOnError: true);
-    return new List<Map>.generate(rels.length, (int idx) => ReleaseGroup.toJSON(rels[idx]));
+    return new List<Map>.generate(rels.length, (int idx) => rels[idx].toJson());
   }
 
   static Future _saveIntoFile(List<ReleaseGroup> toSave, FileToBlock file) async {
@@ -106,12 +105,12 @@ class MusicBrainzFetching {
       return new Future.value(null);
     await asyncForEach(toSave, (ReleaseGroup rel) async => await rel.prepareBandcamp(), continueOnError: true);
     return await FileHandling.blockedAsyncFileOperation(file, (String fileContent) async {
-      List<Map> jsonRel = JSON.decode(fileContent);
+      List<Map> jsonRel = castL<Map>(json.decode(fileContent));
       if (jsonRel.any((Map rel) => rel["bancampUrl"] == null)) {
         jsonRel = await _updateMissingBandcampUrl(jsonRel);
       }
-      jsonRel.addAll(new List.generate(toSave.length, (int idx) => ReleaseGroup.toJSON(toSave[idx])));
-      return JSON.encode(jsonRel);
+      jsonRel.addAll(new List.generate(toSave.length, (int idx) => toSave[idx].toJson()));
+      return json.encode(jsonRel);
     });
   }
 

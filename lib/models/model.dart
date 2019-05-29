@@ -17,11 +17,11 @@ class Artist {
     playCount = int.parse(json["playcount"] ?? "0", onError: (_) => 0);
   }
 
-  static Map<String, String> toJSON(Artist a){
+  Map<String, String> toJson(){
     Map<String, String> map = new Map<String, String>();
-    map["mbid"] = a.mbid;
-    map["name"] = a.name;
-    map["playcount"] = a.playCount.toString();
+    map["mbid"] = this.mbid;
+    map["name"] = this.name;
+    map["playcount"] = this.playCount.toString();
     return map;
   }
 
@@ -47,13 +47,13 @@ class LastRelease {
     playCount = int.parse(json["playcount"]);
   }
 
-  static Map<String, String> toJSON(LastRelease l){
+  Map<String, String> toJson(){
     Map<String, String> map = new Map<String, String>();
-    map["name"] = l.name;
-    map["mbid"] = l.mbid;
-    map["lastRelease"] = StringFromDate(l.lastRelease);
-    map["timestampLastChecked"] = l.timestampLastChecked.toString();
-    map["playcount"] = l.playCount.toString();
+    map["name"] = this.name;
+    map["mbid"] = this.mbid;
+    map["lastRelease"] = StringFromDate(this.lastRelease);
+    map["timestampLastChecked"] = this.timestampLastChecked.toString();
+    map["playcount"] = this.playCount.toString();
     return map;
   }
 }
@@ -65,6 +65,7 @@ class ReleaseGroup {
   String artist;
   String mbid;
   String bandcampUrl;
+  bool hasSearchedForBandcampUrl;
 
   static String ARTIST = "&&&INSERT_ARTIST_HERE&&&";
   static String ALBUM  = "&&&INSERT_ALBUM_HERE&&&";
@@ -83,8 +84,9 @@ class ReleaseGroup {
     first_release_date = DateFromString(json["first-release-date"]);
     primary_type = json["primary-type"];
     bandcampUrl = json["bandcampUrl"];
+    hasSearchedForBandcampUrl = json["hasSearchedForBandcampUrl"] == "true";
     if (json["secondary-types"] != null){
-      List<String> secondaryTypes = json["secondary-types"];
+      List<String> secondaryTypes = castL<String>(json["secondary-types"]);
       if (secondaryTypes.length == 0)
         return;
       primary_type = secondaryTypes[0];
@@ -98,8 +100,9 @@ class ReleaseGroup {
     artist = json["artist"];
     mbid = json["mbid"];
     bandcampUrl = json["bandcampUrl"];
+    hasSearchedForBandcampUrl = json["hasSearchedForBandcampUrl"] == "true";
     if (json["secondary-types"] != null){
-      List<String> secondaryTypes = json["secondary-types"];
+      List<String> secondaryTypes = castL<String>(json["secondary-types"]);
       if (secondaryTypes.length == 0)
         return;
       primary_type = secondaryTypes[0];
@@ -107,7 +110,10 @@ class ReleaseGroup {
   }
 
   Future prepareBandcamp() async {
-    bandcampUrl = await searchBandcamp(this.artist, this.title);
+    if (!hasSearchedForBandcampUrl) {
+      bandcampUrl = await searchBandcamp(this.artist, this.title);
+      hasSearchedForBandcampUrl = true;
+    }
   }
 
   static Future<String> searchBandcamp(String artist, String album) async {
@@ -120,14 +126,15 @@ class ReleaseGroup {
     return searchBandcampUrl + Uri.encodeFull(artist + " " + album);
   }
 
-  static Map<String, String> toJSON(ReleaseGroup r){
+  Map<String, String> toJson(){
     Map<String, String> map = new Map<String, String>();
-    map["title"] = r.title;
-    map["first-release-date"] = StringFromDate(r.first_release_date);
-    map["primary-type"] = r.primary_type;
-    map["artist"] = r.artist;
-    map["mbid"] = r.mbid;
-    map["bandcampUrl"] = r.bandcampUrl;
+    map["title"] = this.title;
+    map["first-release-date"] = StringFromDate(this.first_release_date);
+    map["primary-type"] = this.primary_type;
+    map["artist"] = this.artist;
+    map["mbid"] = this.mbid;
+    map["bandcampUrl"] = this.bandcampUrl;
+    map["hasSearchedForBandcampUrl"] = this.hasSearchedForBandcampUrl.toString();
     return map;
   }
 }

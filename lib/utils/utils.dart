@@ -8,7 +8,7 @@ import 'dart:io';
 
 DateTime DateFromString(String s){
   List<String> parts = s.split('-');
-  List<int> intParts = new List.generate(parts.length, (int idx) => int.parse(parts[idx]), growable: false);
+  List<int> intParts = new List<int>.generate(parts.length, (int idx) => int.parse(parts[idx]), growable: false);
   return new DateTime(intParts[0], intParts[1], intParts[2]);
 }
 
@@ -86,10 +86,19 @@ Future<bool> isHttpPageExists(String url) async {
     httpClient.close();
     return response.statusCode == 200;
   } catch (error, stacktrace) {
+    print(uri);
     print(error);
     print(stacktrace);
     return false;
   }
+}
+
+List<T> castL<T>(List l) {
+  return new List<T>.generate(l.length, (i) => l[i] as T);
+}
+
+List<Map<K, V>> castML<K, V>(List l) {
+  return new List<Map<K, V>>.generate(l.length, (i) => Map<K, V>.from(l[i]));
 }
 
 typedef void CallbackWithTimer(Timer timer);

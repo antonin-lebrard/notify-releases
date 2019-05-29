@@ -13,3 +13,4 @@ doc/api/
 .idea/
 analysis_options.yaml
 *.iml
+.dart_tool/*

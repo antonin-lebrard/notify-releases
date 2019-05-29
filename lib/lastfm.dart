@@ -43,7 +43,7 @@ class LastFMRemote {
   static Future<int> _commonPageFetch(String url, String topLevelKey, String contentKey, void processContent(List<Map> pageContent)) {
     Completer<int> completer = new Completer();
     http.get(url).then((http.Response resp) {
-      Map body = JSON.decode(resp.body);
+      Map body = json.decode(resp.body);
       /// error case (actually not handled for now)
       if (body.containsKey("error")) {
         print(url);
@@ -53,7 +53,7 @@ class LastFMRemote {
       /// find the totalPages
       body = body[topLevelKey];
       int totalPages = int.parse(body["@attr"]["totalPages"] ?? "0", onError: (_) => 0);
-      List content = body[contentKey];
+      List<Map> content = castL<Map>(body[contentKey]);
       /// process the content (part not common to each lastfm page fetch)
       processContent(content);
       /// complete with totalPages
@@ -65,7 +65,7 @@ class LastFMRemote {
   static Future<Map> _commonFetch(String url, String topLevelKey) {
     Completer<Map> completer = new Completer();
     http.get(url).then((http.Response resp) {
-      Map body = JSON.decode(resp.body);
+      Map body = json.decode(resp.body);
       /// error case (actually not handled for now)
       if (body.containsKey("error")) {
         print(url);

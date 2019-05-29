@@ -35,19 +35,19 @@ class FirstLaunchTask {
 class GenerateLastReleaseTask {
 
   static Future doTask() async {
-    List<Map<String, String>> artistsJson = JSON.decode(await FileHandling.readFile(FileHandling.lastFMList));
+    List<Map<String, String>> artistsJson = castML<String, String>(json.decode(await FileHandling.readFile(FileHandling.lastFMList)));
     /// set lastRelease some time before for every artist, configurable
     DateTime genDate = new DateTime.now();
     genDate = genDate.subtract(new Duration(days: Config.daysToSubtract));
     String lastReleaseGen = StringFromDate(genDate);
     /// generate LastReleases list
-    List<LastRelease> lastReleases = new List.generate(artistsJson.length, (int idx){
+    List<LastRelease> lastReleases = new List<LastRelease>.generate(artistsJson.length, (int idx){
       artistsJson[idx]["lastRelease"] = lastReleaseGen;
       artistsJson[idx]["timestampLastChecked"] = (new DateTime.now()).millisecondsSinceEpoch.toString();
       return new LastRelease(artistsJson[idx]);
     }, growable: false);
     /// write it to file
-    return FileHandling.blockedFileOperation(FileHandling.mbLastRelease, (_) => JSON.encode(lastReleases, toEncodable: LastRelease.toJSON));
+    return FileHandling.blockedFileOperation(FileHandling.mbLastRelease, (_) => json.encode(lastReleases));
   }
 
 }
@@ -60,7 +60,7 @@ class LastFMTask {
   static Future doTask([bool firstLaunch = false]) async {
     return LastFMRemote.getArtists().then((List<Artist> artists) async {
       await FileHandling.blockedFileOperation(FileHandling.lastFMList, (String fileContent) {
-        return JSON.encode(artists, toEncodable: Artist.toJSON);
+        return json.encode(artists);
       });
       /// stops here if this is the first launch
       if (firstLaunch) {
@@ -70,10 +70,10 @@ class LastFMTask {
       /// with any updates in the listening habits of our lastfm user
       return await FileHandling.blockedFileOperation(FileHandling.mbLastRelease, (String fileContent) {
         /// merge lastFMList with mbLastRelease
-        List<Map<String, String>> json = (JSON.decode(fileContent) as List<Map<String, String>>);
+        List<Map<String, String>> save = castML<String, String>(json.decode(fileContent));
         /// keep the new artists, update playcount for the already present
         artists.removeWhere((Artist a) {
-          Map<String, String> correspondingLastRelease = json.firstWhere((m) => m["mbid"] == a.mbid, orElse: () => null);
+          Map<String, String> correspondingLastRelease = save.firstWhere((m) => m["mbid"] == a.mbid, orElse: () => null);
           if (correspondingLastRelease == null)
             return false;
           /// if existent, update playcount
@@ -84,12 +84,12 @@ class LastFMTask {
         genDate = genDate.subtract(new Duration(days: Config.daysToSubtract));
         String lastReleaseGen = StringFromDate(genDate);
         artists.forEach((Artist a) {
-          Map<String, String> toAdd = Artist.toJSON(a);
+          Map<String, String> toAdd = a.toJson();
           toAdd["lastRelease"] = lastReleaseGen;
           toAdd["timestampLastChecked"] = (new DateTime.now()).millisecondsSinceEpoch.toString();
-          json.add(toAdd);
+          save.add(toAdd);
         });
-        return JSON.encode(json);
+        return json.encode(save);
       });
     });
   }
@@ -165,8 +165,8 @@ class AutoRecommendLastFMFriendsTrendsTask {
 class MusicBrainzCheckTask {
 
   static Future doTask() async {
-    List<Map<String, String>> json = (JSON.decode(await FileHandling.readFile(FileHandling.mbLastRelease)) as List<Map<String, String>>);
-    List<LastRelease> list = new List.generate(json.length, (int idx) => new LastRelease(json[idx]));
+    List<Map> save = castL<Map>(json.decode(await FileHandling.readFile(FileHandling.mbLastRelease)));
+    List<LastRelease> list = new List<LastRelease>.generate(save.length, (int idx) => new LastRelease(save[idx]));
     LastRelease lastRelease = list.where((LastRelease rel) {
       return rel.playCount > Config.minPlayCountToNotify;
     }).reduce((LastRelease one, LastRelease other){
@@ -215,8 +215,10 @@ class MailBatchTask {
         ..subject = "See new Releases from the artists you follows"
         ..text = "";
 
-    List<Map<String, String>> batchJson = JSON.decode(await FileHandling.readFile(FileHandling.batchReleaseToNotify));
-    List<ReleaseGroup> newReleases = new List.generate(batchJson.length, (int idx) => new ReleaseGroup.mapWithArtistAndMbid(batchJson[idx]), growable: false);
+    List<Map> batchJson = castL<Map>(json.decode(await FileHandling.readFile(FileHandling.batchReleaseToNotify)));
+    List<ReleaseGroup> newReleases = new List<ReleaseGroup>.generate(
+        batchJson.length, (int idx) => new ReleaseGroup.mapWithArtistAndMbid(batchJson[idx]), growable: false
+    );
     if (newReleases.length == 0){
       return new Future.value(null);
     }
@@ -255,29 +257,29 @@ class ServeWebBatch {
   }
 
   static Future<String> _deleteReleases(String requestBody) async {
-    List<Map> relJsonToDel = JSON.decode(requestBody);
+    List<Map> relJsonToDel = castL<Map>(json.decode(requestBody));
     return await FileHandling.blockedFileOperation(FileHandling.webBatchRelease, (String fileContent) {
-      List<Map> allBatchJson = JSON.decode(fileContent);
-      List<ReleaseGroup> relToDel = new List.generate(relJsonToDel.length, (int idx) => new ReleaseGroup.mapWithArtistAndMbid(relJsonToDel[idx]));
-      List<ReleaseGroup> allBatch = new List.generate(allBatchJson.length, (int idx) => new ReleaseGroup.mapWithArtistAndMbid(allBatchJson[idx]));
+      List<Map> allBatchJson = castL<Map>(json.decode(fileContent));
+      List<ReleaseGroup> relToDel = new List<ReleaseGroup>.generate(relJsonToDel.length, (int idx) => new ReleaseGroup.mapWithArtistAndMbid(relJsonToDel[idx]));
+      List<ReleaseGroup> allBatch = new List<ReleaseGroup>.generate(allBatchJson.length, (int idx) => new ReleaseGroup.mapWithArtistAndMbid(allBatchJson[idx]));
       allBatch.removeWhere((ReleaseGroup rel) => relToDel.contains(rel));
-      allBatchJson = new List.generate(allBatch.length, (int idx) => ReleaseGroup.toJSON(allBatch[idx]));
-      return JSON.encode(allBatchJson);
+      allBatchJson = new List.generate(allBatch.length, (int idx) => allBatch[idx].toJson());
+      return json.encode(allBatchJson);
     });
   }
 
   static Future<String> _getEmailBatchInfos() async {
     if (mailTimer == null) {
-      return JSON.encode({
+      return json.encode({
         "timeRemaining": "Not enabled",
         "isEmailSendingPaused": true,
         "nbReleasesToSend": 0,
       });
     }
-    return JSON.encode({
+    return json.encode({
       "timeRemaining": "${mailTimer.timeRemaining.inMinutes}:${mailTimer.timeRemaining.inSeconds - mailTimer.timeRemaining.inMinutes*60}",
       "isEmailSendingPaused": mailTimer.isPaused,
-      "nbReleasesToSend": (JSON.decode(await FileHandling.readFile(FileHandling.batchReleaseToNotify)) as List).length,
+      "nbReleasesToSend": castL<dynamic>(json.decode(await FileHandling.readFile(FileHandling.batchReleaseToNotify))).length,
     });
   }
 

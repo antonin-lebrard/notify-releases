@@ -5,17 +5,13 @@ version: 0.0.1
 #author: Antonin <email@example.com>
 
 environment:
-  sdk: '>=1.20.1 <2.0.0'
+  sdk: '>=2.0.0 <3.0.0'
+#  sdk: '>=1.20.1 <2.0.0'
 
 dependencies:
-  http: "0.11.3+9"
-  mailer: "1.1.4"
+  http: "0.12.0"
+  mailer: "2.0.2"
 
 dev_dependencies:
-  browser: ^0.10.0
-  dart_to_js_script_rewriter: ^1.0.1
-
-transformers:
-- dart_to_js_script_rewriter
-- $dart2js:
-    commandLineOptions: [--trust-type-annotations, --trust-primitives, --fast-startup]
+  build_runner: ^1.0.0
+  build_web_compilers: ^0.4.0

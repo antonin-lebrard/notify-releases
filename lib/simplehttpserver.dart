@@ -81,7 +81,7 @@ class SimpleHttpServer {
   }
 
   static Future<String> _decodeRequestBody(HttpRequest request) async {
-    return request.transform(UTF8.decoder).join();
+    return request.transform(utf8.decoder).join();
   }
 
   static void _addCorsHeaders(HttpRequest request){

@@ -79,19 +79,19 @@ class Config {
     if (!(await configFile.exists())){
       configFile = new File("bin/$filename");
     }
-    Map json = JSON.decode(await configFile.readAsString());
-    lastFMApiKey = json["lastFMApiKey"] ?? "";
-    lastFMUsername = json["lastFMUsername"] ?? "";
-    daysToSubtract = json["daysToSubtract"] ?? 30;
-    minutesUntilNextMail = json["minutesUntilNextMail"] ?? 60;
-    minPlayCountToNotify = json["minPlayCountToNotify"] ?? 20;
-    mailNotificationEnabled = json["mailNotificationEnabled"] ?? false;
-    mailSmtpHostname = json["mailSmtpHostname"] ?? "";
-    mailSmtpPort = json["mailSmtpPort"] ?? 465;
-    mailSmtpSecured = json["mailSmtpSecured"] ?? true;
-    mailSmtpUsername = json["mailSmtpUsername"] ?? "";
-    mailSmtpPassword = json["mailSmtpPassword"] ?? "";
-    mailAddressToContactForNewReleases = json["mailAddressToContactForNewReleases"] ?? "";
+    Map config = json.decode(await configFile.readAsString());
+    lastFMApiKey = config["lastFMApiKey"] ?? "";
+    lastFMUsername = config["lastFMUsername"] ?? "";
+    daysToSubtract = config["daysToSubtract"] ?? 30;
+    minutesUntilNextMail = config["minutesUntilNextMail"] ?? 60;
+    minPlayCountToNotify = config["minPlayCountToNotify"] ?? 20;
+    mailNotificationEnabled = config["mailNotificationEnabled"] ?? false;
+    mailSmtpHostname = config["mailSmtpHostname"] ?? "";
+    mailSmtpPort = config["mailSmtpPort"] ?? 465;
+    mailSmtpSecured = config["mailSmtpSecured"] ?? true;
+    mailSmtpUsername = config["mailSmtpUsername"] ?? "";
+    mailSmtpPassword = config["mailSmtpPassword"] ?? "";
+    mailAddressToContactForNewReleases = config["mailAddressToContactForNewReleases"] ?? "";
   }
 
 }
