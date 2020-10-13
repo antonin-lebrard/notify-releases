@@ -150,8 +150,9 @@ class SearchUrlHelper {
   static String googlePlayMusicSearchUrl = "https://play.google.com/music/listen?u=0#/sr/";
   static String deezerSearchUrl = "http://www.deezer.com/search/";
   static String spotifySearchUrl = "https://open.spotify.com/search/results/";
-  static String searchBandcampUrl = "https://bandcamp.com/search?q=";
-
+  static String bandcamSearchpUrl = "https://bandcamp.com/search?q=";
+  static String soundcloudSearchUrl = "https://soundcloud.com/search?q=";
+  
   static String searchGoogleMusic(String searchTerms){
     List<String> toEncode = searchTerms.split(" ");
     toEncode = toEncode.map<String>((String s) => Uri.encodeFull(s)).toList(growable: false);
@@ -168,7 +169,11 @@ class SearchUrlHelper {
   }
 
   static String searchBandcamp(String searchTerms){
-    return searchBandcampUrl + Uri.encodeFull(searchTerms);
+    return bandcampSearchUrl + Uri.encodeFull(searchTerms);
+  }
+  
+  static String searchSoundcloud(String searchTerms) {
+    return soundcloudSearchUrl + Uri.encodeFull(searchTerms);
   }
 
 }
@@ -284,11 +289,16 @@ class Album {
   DivElement _clickableLinksDiv() {
     clickableWrapperDiv = new DivElement();
     clickableWrapperDiv.classes.add("clickableWrapper");
-    DivElement googleMusicDiv = new DivElement();
-    googleMusicDiv.classes..add("icon")..add("googleMusic");
-    googleMusicDiv.style.backgroundImage = "url('https://play-music.gstatic.com/fe/b9659330fe8ab3a7debed69d371b7063/favicon_96x96.png')";
-    googleMusicDiv.onClick.listen((_) =>
-        window.open(SearchUrlHelper.searchGoogleMusic("$title $artist"), "Search on Google Music"));
+    DivElement soundcloudDiv = new DivElement();
+    soundcloudDiv.classes..add("icon")..add("soundcloud");
+    soundcloudDiv.style.backgroundImage = "url('https://a-v2.sndcdn.com/assets/images/sc-icons/favicon-2cadd14bdb.ico')";
+    soundcloudDiv.onClick.listen((_) =>
+        window.open(SearchUrlHelper.searchSoundcloud("$title $artist"), "Search on Soundcloud"));
+    //DivElement googleMusicDiv = new DivElement();
+    //googleMusicDiv.classes..add("icon")..add("googleMusic");
+    //googleMusicDiv.style.backgroundImage = "url('https://play-music.gstatic.com/fe/b9659330fe8ab3a7debed69d371b7063/favicon_96x96.png')";
+    //googleMusicDiv.onClick.listen((_) =>
+    //    window.open(SearchUrlHelper.searchGoogleMusic("$title $artist"), "Search on Google Music"));
     DivElement deezerDiv = new DivElement();
     deezerDiv.classes..add("icon")..add("deezer");
     deezerDiv.style.backgroundImage = "url('https://e-cdns-files.dzcdn.net/img/common/ogdeezer.jpg')";
@@ -310,12 +320,12 @@ class Album {
         getWebBatch();
       });
     });
-    icons..add(googleMusicDiv)..add(deezerDiv)..add(bandcampDiv)..add(deleteDiv);
+    icons..add(soundcloudDiv)..add(deezerDiv)..add(bandcampDiv)..add(deleteDiv);
     icons.forEach((DivElement d) {
       d.style.marginLeft = "${middleMarginForIcons}px";
       d.style.marginTop = "${middleMarginForIcons}px";
     });
-    clickableWrapperDiv..append(googleMusicDiv)..append(deezerDiv)..append(bandcampDiv)..append(deleteDiv);
+    clickableWrapperDiv..append(soundcloudDiv)..append(deezerDiv)..append(bandcampDiv)..append(deleteDiv);
     return clickableWrapperDiv;
   }
 
